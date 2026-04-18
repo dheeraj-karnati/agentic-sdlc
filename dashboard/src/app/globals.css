@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+/* ── shadcn CSS variables (D8X dark theme) ── */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 210 17% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 17% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 17% 7%;
+    --primary: 47 91% 52%;
+    --primary-foreground: 210 17% 7%;
+    --secondary: 204 62% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 215 15% 15%;
+    --muted-foreground: 215 10% 58%;
+    --accent: 47 91% 52%;
+    --accent-foreground: 210 17% 7%;
+    --destructive: 6 72% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 13% 21%;
+    --input: 213 13% 21%;
+    --ring: 47 91% 52%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 17% 7%;
+    --foreground: 210 29% 92%;
+    --card: 215 18% 11%;
+    --card-foreground: 210 29% 92%;
+    --popover: 215 18% 11%;
+    --popover-foreground: 210 29% 92%;
+    --primary: 47 91% 52%;
+    --primary-foreground: 210 17% 7%;
+    --secondary: 204 62% 47%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 215 15% 15%;
+    --muted-foreground: 215 10% 58%;
+    --accent: 215 15% 15%;
+    --accent-foreground: 210 29% 92%;
+    --destructive: 6 72% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 13% 21%;
+    --input: 213 13% 21%;
+    --ring: 47 91% 52%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-d8x-slate text-white antialiased;
+  }
+  ::selection {
+    @apply bg-d8x-gold/30 text-white;
+  }
+}
+
+/* ── Marketing component classes ── */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-8 py-4 bg-d8x-gold text-d8x-navy-deep
+           font-semibold rounded-lg hover:bg-d8x-gold-light transition-all duration-200
+           shadow-lg shadow-d8x-gold/20 hover:shadow-d8x-gold/40 hover:-translate-y-0.5;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-8 py-4 border-2 border-d8x-blue text-d8x-blue-light
+           font-semibold rounded-lg hover:bg-d8x-blue/10 transition-all duration-200;
+  }
+  .section-heading {
+    @apply text-3xl md:text-4xl font-bold tracking-tight;
+  }
+  .section-subheading {
+    @apply text-lg text-gray-400 max-w-2xl mx-auto mt-4;
+  }
+  .card {
+    @apply bg-d8x-slate-light border border-white/5 rounded-xl p-6
+           hover:border-d8x-blue/30 transition-all duration-300;
+  }
+}
+
+/* ── Pipeline flow animation ── */
+@keyframes data-flow {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+.animate-data-flow {
+  animation: data-flow 4s linear infinite;
+}
+
+/* ── Terminal cursor ── */
+.terminal-cursor::after {
+  content: "\2588";
+  @apply animate-terminal-blink text-d8x-gold ml-0.5;
+}
+
+/* ── Staggered animations ── */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
+
+/* ── Dashboard scrollbar ── */
+.dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+.dark ::-webkit-scrollbar-track { background: #0D1117; }
+.dark ::-webkit-scrollbar-thumb { background: #30363D; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #484F58; }

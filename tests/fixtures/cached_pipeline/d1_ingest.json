@@ -1,0 +1,67 @@
+{
+  "task_outputs": {
+    "ingested_files": {
+      "items": [
+        {
+          "source_id": "src_0000_prd.md",
+          "original_filename": "prd.md",
+          "input_type": "document",
+          "parsed_text": "",
+          "parsed_data": {}
+        }
+      ],
+      "total_files": 1,
+      "errors": []
+    },
+    "structured_bundle": {
+      "sources": [
+        {
+          "source_id": "src_0000_prd.md",
+          "original_filename": "prd.md",
+          "input_type": "document",
+          "content_type": "prd",
+          "language": "en",
+          "domain": "project management",
+          "key_topics": ["task management", "sprint planning", "time tracking", "team collaboration"],
+          "confidence": 0.95,
+          "text": "",
+          "chunks": [],
+          "parsed_data": {}
+        }
+      ],
+      "is_legacy_modernization": false,
+      "has_source_code": false,
+      "has_requirements": true,
+      "total_sources": 1
+    },
+    "source_inventory": {
+      "entries": [
+        {
+          "source_id": "src_0000_prd.md",
+          "original_filename": "prd.md",
+          "content_type": "prd",
+          "word_count": 850,
+          "key_topics": ["task management", "sprint planning", "time tracking"],
+          "quality_score": 0.85,
+          "chunk_count": 0
+        }
+      ],
+      "total_sources": 1,
+      "total_words": 850,
+      "content_type_distribution": {"prd": 1},
+      "is_legacy_modernization": false
+    },
+    "quality_report": {
+      "total_content_volume": 850,
+      "format_diversity": 1,
+      "processing_quality": 0.85,
+      "critical_gaps": [],
+      "warnings": ["Only one source file — cross-referencing and conflict detection will be limited"],
+      "overall_score": 72.5,
+      "passing": true
+    }
+  },
+  "quality_score": 72.5,
+  "stored_count": 1,
+  "errors": []
+}

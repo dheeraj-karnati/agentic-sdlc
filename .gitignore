@@ -1,0 +1,49 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Docker volumes
+docker-data/
+
+# Node (dashboard)
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Artifacts & uploads (local dev)
+uploads/
+artifacts/
+
+# Backups
+*.backup.*

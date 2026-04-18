@@ -1,0 +1,67 @@
+ACME Inventory Management System (IMS) — Legacy Application Overview
+=====================================================================
+
+1. SYSTEM OVERVIEW
+
+The ACME Inventory Management System has been in production since 2009. It tracks
+warehouse stock levels, purchase orders, supplier relationships, and shipping
+fulfillment for ACME Corp's three distribution centers located in Dallas, Chicago,
+and Newark. The system processes approximately 12,000 transactions per day and is
+used by 85 warehouse staff, 20 procurement analysts, and 10 finance team members.
+
+2. TECHNOLOGY STACK
+
+- Backend: Java 8 (Oracle JDK) running on Apache Tomcat 7.0.
+- Database: Oracle 11g R2 with approximately 140 tables and 2,200 stored procedures.
+  The database is 1.4 TB and growing at roughly 15 GB per month.
+- Frontend: JSP pages with jQuery 1.8 and custom JavaScript. No responsive design.
+- Reporting: Crystal Reports 2013, generating 45 scheduled reports nightly.
+- Integration: SOAP web services for ERP (SAP) and accounting (QuickBooks Enterprise).
+  FTP-based file transfers for EDI 850/856 documents with major suppliers.
+- Infrastructure: Two physical Dell PowerEdge R720 servers (primary + failover) in
+  the Dallas data center. No containerization or cloud presence.
+- Authentication: LDAP integration with Microsoft Active Directory. Single sign-on
+  is not implemented; users maintain separate IMS credentials.
+
+3. CORE FEATURES
+
+- Real-time stock tracking with barcode scanning (Honeywell scanners via serial port).
+- Purchase order creation, approval workflows (three-tier: analyst → manager → VP for
+  orders exceeding $50,000), and supplier communication via automated email.
+- Receiving dock management: inbound shipment logging, quality inspection checklists,
+  and automated stock level updates upon receipt confirmation.
+- Pick-pack-ship workflow with wave planning for outbound orders. Supports FIFO and
+  FEFO (First Expired, First Out) picking strategies for perishable goods.
+- Cycle counting module that schedules daily counts by zone rotation.
+- Supplier scorecard tracking delivery accuracy, lead time, and defect rates.
+
+4. BUSINESS RULES
+
+- Minimum stock thresholds trigger automatic reorder suggestions. The reorder point
+  formula is: (average daily usage × lead time days) + safety stock percentage.
+  Safety stock is set per SKU category: 20% for standard items, 35% for critical items.
+- Items classified as hazardous materials (HAZMAT) require additional documentation
+  fields and cannot be stored in zones A or B due to proximity to office areas.
+- Purchase orders above $50,000 require VP approval. Orders above $100,000 require
+  both VP and CFO approval. There is no documented policy for orders above $500,000.
+- Returns from customers must be processed within 48 hours of receipt. Returned items
+  go through a three-step inspection: visual check, functional test, repackaging
+  assessment. Items failing functional test are routed to the write-off queue.
+- Lot tracking is mandatory for pharmaceutical and food-grade product categories.
+  Each lot must maintain full chain-of-custody records from receipt to shipment.
+
+5. KNOWN ISSUES AND PAIN POINTS
+
+- The Oracle stored procedures contain significant business logic that is poorly
+  documented. Several procedures reference a "LEGACY_CALC" package whose original
+  developer left the company in 2015. No one fully understands the margin calculation
+  logic inside LEGACY_CALC.PR_CALCULATE_MARGIN.
+- Performance degrades significantly during month-end closing. Inventory valuation
+  reports that should take 10 minutes now take over 2 hours.
+- The jQuery frontend is not mobile-friendly. Warehouse staff using tablets must
+  zoom and scroll constantly, leading to scanning errors.
+- FTP-based EDI integration fails silently. Failed transfers are only discovered
+  when suppliers call to complain about missing purchase orders.
+- There is no audit trail for manual stock adjustments. Several discrepancies
+  between physical counts and system records remain unexplained.
+- The failover server has not been tested since 2021. DR procedures are undocumented.

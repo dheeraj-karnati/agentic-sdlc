@@ -1,0 +1,149 @@
+{
+  "task_outputs": {
+    "structured_requirements": {
+      "system_purpose": "TaskFlow — project management SaaS for small engineering teams",
+      "business_rules_by_domain": {
+        "task_management": [
+          {"title": "Task Status Workflow", "description": "Backlog → Todo → In Progress → In Review → Done"},
+          {"title": "Subtask Depth", "description": "One level deep only"},
+          {"title": "Task Dependencies", "description": "Blocked tasks cannot move to In Progress"}
+        ],
+        "sprint_management": [
+          {"title": "Sprint Duration", "description": "2 weeks default, configurable 1-4"},
+          {"title": "Sprint Planning", "description": "Cannot add tasks to completed sprints"}
+        ],
+        "access_control": [
+          {"title": "Role-Based Access", "description": "Admin > Manager > Member > Viewer"},
+          {"title": "Task Assignment", "description": "Only members and managers can be assignees"}
+        ]
+      },
+      "entities": [
+        {"entity_name": "Workspace"}, {"entity_name": "Project"}, {"entity_name": "Task"},
+        {"entity_name": "Sprint"}, {"entity_name": "User"}, {"entity_name": "Comment"},
+        {"entity_name": "TimeEntry"}, {"entity_name": "Label"}, {"entity_name": "Attachment"},
+        {"entity_name": "Notification"}, {"entity_name": "SavedFilter"}
+      ],
+      "user_roles": [
+        {"name": "admin", "description": "Full access"},
+        {"name": "manager", "description": "Project and team management"},
+        {"name": "member", "description": "Task work and time logging"},
+        {"name": "viewer", "description": "Read-only"}
+      ],
+      "non_functional_requirements": ["<200ms p95 response time", "500 concurrent users", "99.9% uptime", "SOC2 Type II", "GDPR compliant"],
+      "constraints": ["Budget: $200K", "Timeline: 8 weeks MVP", "Team: 2 BE + 1 FE + 1 designer"],
+      "security_requirements": ["AES-256 at rest", "TLS 1.3 in transit", "SOC2 compliance"]
+    },
+    "architecture": {
+      "pattern": "modular_monolith",
+      "rationale": "A modular monolith is the optimal choice for a small team (4 people) building an MVP in 8 weeks. It provides clean module boundaries that can be extracted to microservices later if needed, while keeping deployment and debugging simple. The team size doesn't justify the operational overhead of microservices.",
+      "trade_offs": ["Simpler deployment than microservices", "All modules share a database", "Scaling is vertical initially", "Module boundaries need discipline to maintain"],
+      "risks": [{"risk": "Module coupling over time", "likelihood": "medium", "impact": "medium", "mitigation": "Enforce module boundaries via import rules and code review"}],
+      "recommended_stack": [
+        {"category": "backend_framework", "technology": "FastAPI", "justification": "Async support, auto OpenAPI docs, type safety with Pydantic. Matches team's Python preference.", "alternatives_considered": ["Django", "Flask"]},
+        {"category": "frontend_framework", "technology": "Next.js 14", "justification": "App Router for modern React patterns, SSR for fast initial load, good DX. Matches PRD stack preference.", "alternatives_considered": ["Remix", "SvelteKit"]},
+        {"category": "database", "technology": "PostgreSQL 16", "justification": "JSONB for flexible metadata, excellent indexing, row-level security for multi-tenancy.", "alternatives_considered": ["MySQL", "CockroachDB"]},
+        {"category": "cache", "technology": "Redis", "justification": "Session store, real-time notifications pub/sub, rate limiting.", "alternatives_considered": ["Memcached"]},
+        {"category": "object_storage", "technology": "S3 (or MinIO)", "justification": "File attachments up to 10MB per task. S3-compatible for cloud portability.", "alternatives_considered": ["Local filesystem"]}
+      ],
+      "component_diagram": "graph TD;\n  Client[Next.js Frontend] --> API[FastAPI Backend];\n  API --> DB[(PostgreSQL)];\n  API --> Cache[(Redis)];\n  API --> S3[(S3/MinIO)];\n  API --> TaskModule[Task Module];\n  API --> SprintModule[Sprint Module];\n  API --> UserModule[User Module];\n  API --> TimeModule[Time Module];\n  API --> NotifModule[Notification Module];",
+      "deployment_model": "Docker Compose for development, Kubernetes for production",
+      "adrs": [
+        {"title": "ADR-001: Modular Monolith", "context": "4-person team, 8-week MVP timeline", "decision": "Use modular monolith over microservices", "consequences": "Simpler ops, risk of coupling, can extract later"},
+        {"title": "ADR-002: PostgreSQL Multi-tenancy", "context": "SaaS with workspace isolation", "decision": "Use schema-per-workspace or RLS for tenant isolation", "consequences": "Good isolation, some query complexity"}
+      ]
+    },
+    "database_schema": {
+      "tables": [
+        {"name": "workspaces", "purpose": "Top-level tenant", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "name", "type": "VARCHAR(255) NOT NULL"}, {"name": "slug", "type": "VARCHAR(100) NOT NULL UNIQUE"}]},
+        {"name": "users", "purpose": "User accounts", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "email", "type": "VARCHAR(255) NOT NULL UNIQUE"}, {"name": "name", "type": "VARCHAR(255) NOT NULL"}, {"name": "password_hash", "type": "VARCHAR(256) NOT NULL"}]},
+        {"name": "workspace_members", "purpose": "User-workspace membership with role", "columns": [{"name": "workspace_id", "type": "UUID NOT NULL"}, {"name": "user_id", "type": "UUID NOT NULL"}, {"name": "role", "type": "VARCHAR(50) NOT NULL"}]},
+        {"name": "projects", "purpose": "Projects within a workspace", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "workspace_id", "type": "UUID NOT NULL"}, {"name": "name", "type": "VARCHAR(255) NOT NULL"}, {"name": "status", "type": "VARCHAR(50) DEFAULT 'active'"}, {"name": "sprint_duration_weeks", "type": "INTEGER DEFAULT 2"}]},
+        {"name": "tasks", "purpose": "Work items", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "project_id", "type": "UUID NOT NULL"}, {"name": "title", "type": "VARCHAR(500) NOT NULL"}, {"name": "status", "type": "VARCHAR(50) DEFAULT 'backlog'"}, {"name": "priority", "type": "VARCHAR(20) DEFAULT 'medium'"}, {"name": "assignee_id", "type": "UUID"}, {"name": "sprint_id", "type": "UUID"}, {"name": "parent_task_id", "type": "UUID"}, {"name": "story_points", "type": "INTEGER"}, {"name": "due_date", "type": "DATE"}]},
+        {"name": "task_dependencies", "purpose": "Task blocking relationships", "columns": [{"name": "blocker_id", "type": "UUID NOT NULL"}, {"name": "blocked_id", "type": "UUID NOT NULL"}]},
+        {"name": "sprints", "purpose": "Time-boxed iterations", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "project_id", "type": "UUID NOT NULL"}, {"name": "name", "type": "VARCHAR(255)"}, {"name": "status", "type": "VARCHAR(50) DEFAULT 'planning'"}, {"name": "start_date", "type": "DATE"}, {"name": "end_date", "type": "DATE"}]},
+        {"name": "comments", "purpose": "Task comments", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "task_id", "type": "UUID NOT NULL"}, {"name": "author_id", "type": "UUID NOT NULL"}, {"name": "body", "type": "TEXT"}]},
+        {"name": "time_entries", "purpose": "Logged time", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "task_id", "type": "UUID NOT NULL"}, {"name": "user_id", "type": "UUID NOT NULL"}, {"name": "duration_hours", "type": "DECIMAL(5,2)"}, {"name": "logged_at", "type": "DATE"}]},
+        {"name": "labels", "purpose": "Task labels", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "project_id", "type": "UUID NOT NULL"}, {"name": "name", "type": "VARCHAR(100)"}, {"name": "color", "type": "VARCHAR(7)"}]},
+        {"name": "attachments", "purpose": "File attachments (S3)", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "task_id", "type": "UUID NOT NULL"}, {"name": "filename", "type": "VARCHAR(500)"}, {"name": "s3_key", "type": "VARCHAR(1000)"}, {"name": "size_bytes", "type": "INTEGER"}]},
+        {"name": "notifications", "purpose": "User notifications", "columns": [{"name": "id", "type": "UUID PRIMARY KEY"}, {"name": "user_id", "type": "UUID NOT NULL"}, {"name": "type", "type": "VARCHAR(50)"}, {"name": "read", "type": "BOOLEAN DEFAULT false"}, {"name": "data", "type": "JSONB"}]}
+      ],
+      "ddl": "-- See tables above for full DDL",
+      "er_diagram_mermaid": "erDiagram\n  WORKSPACES ||--o{ PROJECTS : contains\n  WORKSPACES ||--o{ WORKSPACE_MEMBERS : has\n  USERS ||--o{ WORKSPACE_MEMBERS : belongs_to\n  PROJECTS ||--o{ TASKS : contains\n  PROJECTS ||--o{ SPRINTS : contains\n  TASKS ||--o{ COMMENTS : has\n  TASKS ||--o{ TIME_ENTRIES : has\n  TASKS ||--o{ ATTACHMENTS : has\n  SPRINTS ||--o{ TASKS : contains\n  USERS ||--o{ TASKS : assigned_to",
+      "migrations": [{"version": "001", "description": "Initial schema", "up_sql": "CREATE TABLE workspaces...", "down_sql": "DROP TABLE workspaces CASCADE;"}],
+      "design_notes": ["UUID primary keys everywhere", "All tables have created_at, updated_at", "Soft delete via deleted_at on tasks and projects"]
+    },
+    "api_specification": {
+      "base_path": "/api/v1",
+      "endpoints": [
+        {"method": "POST", "path": "/auth/register", "summary": "Register user", "auth_required": false, "required_roles": []},
+        {"method": "POST", "path": "/auth/login", "summary": "Login", "auth_required": false, "required_roles": []},
+        {"method": "GET", "path": "/workspaces", "summary": "List user workspaces", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "POST", "path": "/workspaces", "summary": "Create workspace", "auth_required": true, "required_roles": ["admin"]},
+        {"method": "GET", "path": "/projects", "summary": "List projects", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "POST", "path": "/projects", "summary": "Create project", "auth_required": true, "required_roles": ["admin", "manager"]},
+        {"method": "GET", "path": "/projects/{id}/tasks", "summary": "List tasks", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "POST", "path": "/projects/{id}/tasks", "summary": "Create task", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "PUT", "path": "/tasks/{id}", "summary": "Update task", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "PATCH", "path": "/tasks/{id}/status", "summary": "Change task status", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "DELETE", "path": "/tasks/{id}", "summary": "Delete task", "auth_required": true, "required_roles": ["admin", "manager"]},
+        {"method": "GET", "path": "/projects/{id}/sprints", "summary": "List sprints", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "POST", "path": "/projects/{id}/sprints", "summary": "Create sprint", "auth_required": true, "required_roles": ["admin", "manager"]},
+        {"method": "POST", "path": "/sprints/{id}/start", "summary": "Start sprint", "auth_required": true, "required_roles": ["admin", "manager"]},
+        {"method": "POST", "path": "/sprints/{id}/complete", "summary": "Complete sprint", "auth_required": true, "required_roles": ["admin", "manager"]},
+        {"method": "POST", "path": "/tasks/{id}/comments", "summary": "Add comment", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "POST", "path": "/tasks/{id}/time-entries", "summary": "Log time", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "GET", "path": "/time-entries/weekly", "summary": "Weekly timesheet", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "POST", "path": "/tasks/{id}/attachments", "summary": "Upload attachment", "auth_required": true, "required_roles": ["admin", "manager", "member"]},
+        {"method": "GET", "path": "/search", "summary": "Global search", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "GET", "path": "/dashboard", "summary": "Personal/team dashboard", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]},
+        {"method": "GET", "path": "/notifications", "summary": "List notifications", "auth_required": true, "required_roles": ["admin", "manager", "member", "viewer"]}
+      ],
+      "pagination_strategy": "Cursor-based with page and limit params",
+      "error_format": {"type": "string", "title": "string", "detail": "string", "status": "integer"}
+    },
+    "auth_design": {
+      "auth_strategy": "jwt",
+      "token_management": [
+        {"type": "access", "expiry": "15m", "storage": "memory"},
+        {"type": "refresh", "expiry": "30d", "storage": "httponly_cookie"}
+      ],
+      "roles": [
+        {"name": "admin", "description": "Full system access, billing, team management", "permissions": ["all"]},
+        {"name": "manager", "description": "Project management, team oversight", "permissions": ["projects:write", "tasks:write", "sprints:write", "members:read", "reports:read"]},
+        {"name": "member", "description": "Task work, time logging", "permissions": ["tasks:write", "comments:write", "time:write"]},
+        {"name": "viewer", "description": "Read-only access", "permissions": ["projects:read", "tasks:read", "reports:read"]}
+      ],
+      "security_measures": [
+        {"measure": "Password hashing", "description": "bcrypt with cost factor 12"},
+        {"measure": "Rate limiting", "description": "10 attempts/min on /auth/login"},
+        {"measure": "CORS", "description": "Strict origin whitelist"}
+      ],
+      "password_policy": "Min 10 chars, 1 uppercase, 1 digit"
+    },
+    "frontend_components": {
+      "framework": "Next.js 14",
+      "routes": [
+        {"path": "/login", "page_component": "LoginPage", "auth_required": false},
+        {"path": "/dashboard", "page_component": "DashboardPage", "auth_required": true},
+        {"path": "/projects", "page_component": "ProjectsPage", "auth_required": true},
+        {"path": "/projects/[id]/board", "page_component": "SprintBoardPage", "auth_required": true},
+        {"path": "/projects/[id]/backlog", "page_component": "BacklogPage", "auth_required": true},
+        {"path": "/projects/[id]/sprints", "page_component": "SprintListPage", "auth_required": true},
+        {"path": "/tasks/[id]", "page_component": "TaskDetailPage", "auth_required": true},
+        {"path": "/timesheet", "page_component": "TimesheetPage", "auth_required": true},
+        {"path": "/settings", "page_component": "SettingsPage", "auth_required": true}
+      ],
+      "state_management": "React Query for server state, Zustand for UI state (sidebar, modals)",
+      "data_fetching": "React Query with SWR caching and optimistic updates"
+    },
+    "quality_assessment": {
+      "overall_score": 81.5,
+      "passing": true,
+      "gaps": [],
+      "suggestions": []
+    }
+  },
+  "quality_score": 81.5,
+  "artifacts_stored": 5,
+  "errors": []
+}
