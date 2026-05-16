@@ -52,10 +52,17 @@ async def discover_business_rules(
 
     # Build source texts — prefer DB, fall back to passed-in content
     if sources_from_db:
-        source_texts = [
-            {"filename": s.title or "unknown", "content": s.content or ""}
-            for s in sources_from_db
-        ]
+        source_texts = []
+        for s in sources_from_db:
+            meta = s.metadata_ or {}
+            elements = meta.get("elements", [])
+            source_texts.append({
+                "filename": s.title or "unknown",
+                "content": s.content or "",
+                "elements": elements,
+                "element_summary": meta.get("element_summary", {}),
+                "parser_used": meta.get("parser_used", "unknown"),
+            })
     elif ingested_content:
         source_texts = [
             {
@@ -71,12 +78,32 @@ async def discover_business_rules(
     all_rules: list[dict] = []
     all_entities: list[dict] = []
     all_defects: list[dict] = []
+    parse_warnings: list[dict] = []  # files that had partial/failed extraction
     rule_counter = 1
     entity_names_seen: set[str] = set()
 
     # === Phase 1: Extract from each source individually ===
     for source in source_texts:
-        content_preview = source["content"][:6000]
+        # Build content with structural markup if elements available
+        elements = source.get("elements", [])
+        if elements:
+            parts: list[str] = []
+            for el in elements:
+                cat = el.get("category", "")
+                text = el.get("text", "")
+                if not text.strip():
+                    continue
+                if cat == "Table":
+                    parts.append(f"<table>\n{text}\n</table>")
+                elif cat == "Title":
+                    parts.append(f"## {text}")
+                elif cat == "ListItem":
+                    parts.append(f"- {text}")
+                else:
+                    parts.append(text)
+            content_preview = "\n\n".join(parts)[:6000]
+        else:
+            content_preview = source["content"][:6000]
         if not content_preview.strip():
             continue
 
@@ -162,6 +189,11 @@ For BRDs and requirements docs, look for:
 
         except Exception as e:
             logger.warning("Extraction failed for %s: %s", source["filename"], e)
+            parse_warnings.append({
+                "filename": source["filename"],
+                "error": str(e)[:200],
+                "impact": "This file was not fully analyzed. Some business rules or defects may have been missed.",
+            })
             continue
 
     # === Phase 2: Conflict, defect & vulnerability detection ===
@@ -391,11 +423,13 @@ Respond with this JSON:
         "defects": all_defects,
         "clarification_questions": questions,
         "system_understanding": system_understanding,
+        "parse_warnings": parse_warnings,
         "metrics": {
             "rules_found": total_rules,
             "entities": total_entities,
             "conflicts": total_conflicts,
             "defects": total_defects,
+            "files_with_warnings": len(parse_warnings),
             "quality_score": quality_score,
         },
         "quality_assessment": {

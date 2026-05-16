@@ -38,7 +38,7 @@ export function ReportDownload({ projectId, agentType }: ReportDownloadProps) {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-d8x-text-secondary border border-d8x-border rounded-md hover:bg-d8x-surface-hover transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-300 border border-ink-700 rounded-md hover:bg-ink-850 transition-colors"
       >
         {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
         Download report
@@ -48,11 +48,11 @@ export function ReportDownload({ projectId, agentType }: ReportDownloadProps) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-1 w-44 bg-d8x-surface border border-d8x-border rounded-lg shadow-xl z-20 overflow-hidden">
-            <button onClick={() => handleDownload("pdf")} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-d8x-text-primary hover:bg-d8x-surface-hover transition-colors">
+          <div className="absolute right-0 mt-1 w-44 bg-ink-900 border border-ink-700 rounded-lg shadow-xl z-20 overflow-hidden">
+            <button onClick={() => handleDownload("pdf")} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-ink-50 hover:bg-ink-850 transition-colors">
               <FileText className="w-4 h-4 text-red-400" /> PDF report
             </button>
-            <button onClick={() => handleDownload("docx")} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-d8x-text-primary hover:bg-d8x-surface-hover transition-colors border-t border-d8x-border">
+            <button onClick={() => handleDownload("docx")} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-ink-50 hover:bg-ink-850 transition-colors border-t border-ink-700">
               <FileSpreadsheet className="w-4 h-4 text-blue-400" /> Word document
             </button>
           </div>

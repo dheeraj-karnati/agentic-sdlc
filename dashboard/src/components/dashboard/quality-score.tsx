@@ -21,13 +21,13 @@ export function QualityScore({ score, size = 100 }: { score: number; size?: numb
         <text
           x={size / 2} y={size / 2}
           textAnchor="middle" dominantBaseline="central"
-          className="rotate-90 origin-center fill-d8x-text-primary text-xl font-bold"
+          className="rotate-90 origin-center fill-ink-50 text-xl font-bold"
           style={{ transformOrigin: `${size / 2}px ${size / 2}px` }}
         >
           {Math.round(score)}
         </text>
       </svg>
-      <span className="text-xs text-d8x-text-secondary">Quality Score</span>
+      <span className="text-xs text-ink-300">Quality Score</span>
     </div>
   );
 }

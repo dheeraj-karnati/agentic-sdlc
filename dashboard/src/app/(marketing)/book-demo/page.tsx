@@ -128,13 +128,13 @@ export default function BookDemoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-d8x-slate">
+    <div className="min-h-screen bg-ink-900">
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-d8x-slate/95 backdrop-blur-md border-b border-white/5">
+      <nav className="fixed top-0 w-full z-50 bg-ink-900/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl font-black tracking-tighter">
-              D8<span className="text-d8x-gold">X</span>
+              D8<span className="text-flame">X</span>
             </span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
@@ -151,7 +151,7 @@ export default function BookDemoPage() {
           <div className="lg:pt-8">
             <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
               See D8X in action<br />
-              <span className="text-d8x-gold">with your own project.</span>
+              <span className="text-flame">with your own project.</span>
             </h1>
             <p className="mt-6 text-lg text-gray-400 leading-relaxed">
               Book a 30-minute live demo where we run D8X on a sample from your
@@ -178,19 +178,19 @@ export default function BookDemoPage() {
             <div className="mt-10 pt-8 border-t border-white/10">
               <div className="flex items-center gap-6 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-d8x-gold" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-flame" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   Patent Pending
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-d8x-gold" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-flame" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   SOC2 Ready
                 </div>
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-d8x-gold" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 text-flame" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   On-Prem Available
@@ -202,9 +202,9 @@ export default function BookDemoPage() {
           {/* Right: Cal.com scheduling + contact form */}
           <div className="space-y-6">
             {/* Cal.com instant scheduling — primary CTA */}
-            <div className="rounded-2xl border border-d8x-gold/30 bg-gradient-to-b from-d8x-gold/5 to-transparent p-8 text-center">
+            <div className="rounded-2xl border border-flame/30 bg-gradient-to-b from-flame/5 to-transparent p-8 text-center">
               <div className="flex items-center justify-center gap-2 mb-3">
-                <svg className="w-6 h-6 text-d8x-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6 text-flame" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <h2 className="text-xl font-bold text-white">Schedule Instantly</h2>
@@ -241,7 +241,7 @@ export default function BookDemoPage() {
                 <h2 className="text-2xl font-bold text-white mb-3">You're all set!</h2>
                 <p className="text-gray-400 leading-relaxed mb-6">
                   Thanks, <span className="text-white font-medium">{form.name.split(" ")[0]}</span>!
-                  We'll reach out to <span className="text-d8x-blue-light font-medium">{form.email}</span> within
+                  We'll reach out to <span className="text-sky-400 font-medium">{form.email}</span> within
                   24 hours to schedule your live demo.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -257,7 +257,7 @@ export default function BookDemoPage() {
               /* ─── Form ─── */
               <form
                 onSubmit={handleSubmit}
-                className="rounded-2xl border border-white/10 bg-d8x-slate-light p-8 space-y-5"
+                className="rounded-2xl border border-white/10 bg-ink-800 p-8 space-y-5"
               >
                 <div>
                   <h2 className="text-xl font-bold text-white">Book a Demo</h2>
@@ -267,7 +267,7 @@ export default function BookDemoPage() {
                 {/* Name */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Full Name <span className="text-d8x-gold">*</span>
+                    Full Name <span className="text-flame">*</span>
                   </label>
                   <input
                     type="text"
@@ -277,7 +277,7 @@ export default function BookDemoPage() {
                     onChange={handleChange}
                     required
                     placeholder="Jane Smith"
-                    className="w-full px-4 py-3 bg-d8x-slate border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-d8x-blue/50 focus:ring-1 focus:ring-d8x-blue/30 transition-colors"
+                    className="w-full px-4 py-3 bg-ink-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-colors"
                   />
                 </div>
 
@@ -293,14 +293,14 @@ export default function BookDemoPage() {
                     value={form.company}
                     onChange={handleChange}
                     placeholder="Acme Corp"
-                    className="w-full px-4 py-3 bg-d8x-slate border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-d8x-blue/50 focus:ring-1 focus:ring-d8x-blue/30 transition-colors"
+                    className="w-full px-4 py-3 bg-ink-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-colors"
                   />
                 </div>
 
                 {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5">
-                    Work Email <span className="text-d8x-gold">*</span>
+                    Work Email <span className="text-flame">*</span>
                   </label>
                   <input
                     type="email"
@@ -310,7 +310,7 @@ export default function BookDemoPage() {
                     onChange={handleChange}
                     required
                     placeholder="jane@acme.com"
-                    className="w-full px-4 py-3 bg-d8x-slate border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-d8x-blue/50 focus:ring-1 focus:ring-d8x-blue/30 transition-colors"
+                    className="w-full px-4 py-3 bg-ink-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-colors"
                   />
                 </div>
 
@@ -326,7 +326,7 @@ export default function BookDemoPage() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="+1 (555) 123-4567"
-                    className="w-full px-4 py-3 bg-d8x-slate border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-d8x-blue/50 focus:ring-1 focus:ring-d8x-blue/30 transition-colors"
+                    className="w-full px-4 py-3 bg-ink-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-colors"
                   />
                 </div>
 
@@ -342,7 +342,7 @@ export default function BookDemoPage() {
                     onChange={handleChange}
                     rows={4}
                     placeholder="We have a legacy VB6 application with 500K lines of code that needs modernization..."
-                    className="w-full px-4 py-3 bg-d8x-slate border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-d8x-blue/50 focus:ring-1 focus:ring-d8x-blue/30 transition-colors resize-none"
+                    className="w-full px-4 py-3 bg-ink-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30 transition-colors resize-none"
                   />
                 </div>
 

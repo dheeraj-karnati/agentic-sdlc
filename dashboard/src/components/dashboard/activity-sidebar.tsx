@@ -12,13 +12,13 @@ export function ActivitySidebar({ project, approvals }: ActivitySidebarProps) {
   const events = buildEvents(project, approvals);
 
   return (
-    <aside className="border-l border-d8x-border bg-d8x-surface/50 p-5 space-y-6 h-full overflow-y-auto">
+    <aside className="border-l border-ink-700 bg-ink-900/50 p-5 space-y-6 h-full overflow-y-auto">
       {/* Project info */}
       <div>
-        <h3 className="text-xs font-semibold text-d8x-text-secondary uppercase tracking-wider mb-3">Project</h3>
+        <h3 className="text-xs font-semibold text-ink-300 uppercase tracking-wider mb-3">Project</h3>
         <p className="text-sm font-medium">{project.name}</p>
-        {project.description && <p className="text-xs text-d8x-text-secondary mt-1">{project.description}</p>}
-        <div className="flex items-center gap-1.5 mt-3 text-xs text-d8x-text-secondary">
+        {project.description && <p className="text-xs text-ink-300 mt-1">{project.description}</p>}
+        <div className="flex items-center gap-1.5 mt-3 text-xs text-ink-300">
           <Clock className="w-3 h-3" />
           Created {new Date(project.created_at).toLocaleDateString()}
         </div>
@@ -26,9 +26,9 @@ export function ActivitySidebar({ project, approvals }: ActivitySidebarProps) {
 
       {/* Activity log */}
       <div>
-        <h3 className="text-xs font-semibold text-d8x-text-secondary uppercase tracking-wider mb-3">Activity</h3>
+        <h3 className="text-xs font-semibold text-ink-300 uppercase tracking-wider mb-3">Activity</h3>
         {events.length === 0 && (
-          <p className="text-xs text-d8x-text-tertiary">No activity yet.</p>
+          <p className="text-xs text-ink-400">No activity yet.</p>
         )}
         <div className="space-y-3">
           {events.map((e, i) => (
@@ -36,7 +36,7 @@ export function ActivitySidebar({ project, approvals }: ActivitySidebarProps) {
               <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${e.color}`} />
               <div>
                 <p className="text-xs">{e.text}</p>
-                <p className="text-[10px] text-d8x-text-tertiary mt-0.5">{e.time}</p>
+                <p className="text-[10px] text-ink-400 mt-0.5">{e.time}</p>
               </div>
             </div>
           ))}
@@ -54,7 +54,7 @@ function buildEvents(project: Project, approvals: ApprovalGate[]): Event[] {
   events.push({
     text: `Project "${project.name}" created`,
     time: new Date(project.created_at).toLocaleString(),
-    color: "bg-d8x-blue",
+    color: "bg-sky-500",
   });
 
   for (const gate of approvals) {
@@ -62,19 +62,19 @@ function buildEvents(project: Project, approvals: ApprovalGate[]): Event[] {
       events.push({
         text: `${gate.agent_type ?? "Agent"} approved`,
         time: gate.decided_at ? new Date(gate.decided_at).toLocaleString() : "",
-        color: "bg-d8x-success",
+        color: "bg-emerald-500",
       });
     } else if (gate.status === "rejected") {
       events.push({
         text: `${gate.agent_type ?? "Agent"} rejected`,
         time: gate.decided_at ? new Date(gate.decided_at).toLocaleString() : "",
-        color: "bg-d8x-danger",
+        color: "bg-red-500",
       });
     } else if (gate.status === "pending") {
       events.push({
         text: `${gate.agent_type ?? "Agent"} awaiting review`,
         time: new Date(gate.created_at).toLocaleString(),
-        color: "bg-d8x-warning",
+        color: "bg-amber-500",
       });
     }
   }

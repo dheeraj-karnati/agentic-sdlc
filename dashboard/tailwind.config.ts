@@ -7,6 +7,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* ── New marketing design system ── */
+        ink: {
+          950: '#08080a',
+          900: '#0c0c0e',
+          850: '#111114',
+          800: '#16161a',
+          750: '#1c1c21',
+          700: '#23232a',
+          600: '#2d2d35',
+          500: '#3a3a44',
+          400: '#5a5a66',
+          300: '#8a8a96',
+          200: '#bdbdc6',
+          100: '#e7e7ea',
+          50:  '#f5f5f7',
+        },
+        flame: {
+          DEFAULT: '#ff7a3a',
+          soft: '#ff9560',
+          deep: '#e85d1c',
+          glow: 'rgba(255,122,58,0.18)',
+        },
+        moss: '#7aaa7a',
         /* ── D8X brand (marketing + dashboard) ── */
         d8x: {
           navy: "#1B4F72",
@@ -51,8 +74,13 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
+      },
+      boxShadow: {
+        'flame': '0 0 0 1px rgba(255,122,58,.35), 0 8px 30px -8px rgba(255,122,58,.35)',
+        'card-glow': '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 0 0 1px rgba(255,255,255,0.04)',
       },
       animation: {
         "flow-pulse": "flow-pulse 3s ease-in-out infinite",
@@ -62,6 +90,9 @@ const config: Config = {
         "stage-pulse": "stage-pulse 2s ease-in-out infinite",
         "dot-flow": "dot-flow 1.5s linear infinite",
         "fade-up": "fade-up 0.4s ease-out forwards",
+        flow: 'flow 3.5s linear infinite',
+        pulseRing: 'pulseRing 2.5s cubic-bezier(0.4,0,0.6,1) infinite',
+        blink: 'blink 1.5s ease infinite',
       },
       keyframes: {
         "flow-pulse": {
@@ -94,6 +125,9 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        flow: { '0%': { transform: 'translateX(-10%)', opacity: '0' }, '15%':{ opacity:'1' }, '85%':{ opacity:'1' }, '100%': { transform: 'translateX(110%)', opacity: '0' } },
+        pulseRing: { '0%':{ boxShadow:'0 0 0 0 rgba(255,122,58,.45)' }, '70%':{ boxShadow:'0 0 0 14px rgba(255,122,58,0)' }, '100%':{ boxShadow:'0 0 0 0 rgba(255,122,58,0)' } },
+        blink: { '0%,100%':{ opacity:'1' }, '50%':{ opacity:'0.3' } },
       },
     },
   },

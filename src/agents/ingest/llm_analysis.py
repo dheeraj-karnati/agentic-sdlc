@@ -23,8 +23,11 @@ async def analyze_ingested_content(
     file_summaries = []
     for f in parsed_files:
         content_preview = f.get("content", f.get("description", ""))[:3000]
+        element_info = ""
+        if f.get("element_summary"):
+            element_info = f"\nDocument structure: {f['element_summary']}"
         file_summaries.append(
-            f"File: {f['filename']} (type: {f.get('file_type', 'unknown')})\n"
+            f"File: {f['filename']} (type: {f.get('file_type', 'unknown')}){element_info}\n"
             f"Content preview:\n{content_preview}\n---"
         )
 

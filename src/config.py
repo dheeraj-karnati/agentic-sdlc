@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # App
     app_env: str = "development"
     log_level: str = "DEBUG"
+    cors_origins: str = "http://localhost:3000"  # comma-separated for multiple origins
 
     # Database
     database_url: str = "postgresql+asyncpg://sdlc:sdlc_password@localhost:5432/agentic_sdlc"

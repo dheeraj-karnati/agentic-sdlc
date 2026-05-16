@@ -17,7 +17,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D1: Ingest",
     id: "ingest",
-    color: "#2E86C1",
+    color: "#38bdf8",
     lines: [
       { text: "$ d8x ingest --project inventorypro --files ./legacy/", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -35,7 +35,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D2: Discover",
     id: "discover",
-    color: "#2E86C1",
+    color: "#38bdf8",
     lines: [
       { text: "$ d8x discover --project inventorypro", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -58,7 +58,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D3: Design",
     id: "design",
-    color: "#2E86C1",
+    color: "#38bdf8",
     lines: [
       { text: "$ d8x design --project inventorypro", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -81,7 +81,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D4: Prototype",
     id: "prototype",
-    color: "#F5C518",
+    color: "#ff7a3a",
     lines: [
       { text: "$ d8x prototype --project inventorypro --provider s3_static", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -101,7 +101,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D5: Plan",
     id: "plan",
-    color: "#F5C518",
+    color: "#ff7a3a",
     lines: [
       { text: "$ d8x plan --project inventorypro", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -122,7 +122,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D6: Build",
     id: "build",
-    color: "#F5C518",
+    color: "#ff7a3a",
     lines: [
       { text: "$ d8x build --project inventorypro --epic 1", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -142,7 +142,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D7: Test",
     id: "test",
-    color: "#2E86C1",
+    color: "#38bdf8",
     lines: [
       { text: "$ d8x test --project inventorypro", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -162,7 +162,7 @@ const AGENT_SEQUENCES: { agent: string; id: string; color: string; lines: Termin
   {
     agent: "D8: Ship",
     id: "ship",
-    color: "#2E86C1",
+    color: "#38bdf8",
     lines: [
       { text: "$ d8x ship --project inventorypro --target production", type: "command", delay: 800 },
       { text: "", type: "blank", delay: 200 },
@@ -214,17 +214,17 @@ function Terminal({ sequence, isActive, onComplete }: {
   }, [visibleLines]);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0a0a14] overflow-hidden shadow-2xl">
+    <div className="rounded-xl border border-white/10 bg-ink-950 overflow-hidden shadow-2xl">
       {/* Title bar */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-[#111122] border-b border-white/5">
+      <div className="flex items-center gap-2 px-4 py-3 bg-ink-900 border-b border-white/5">
         <div className="flex gap-1.5">
           <span className="w-3 h-3 rounded-full bg-red-500/80" />
-          <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+          <span className="w-3 h-3 rounded-full bg-flame" />
           <span className="w-3 h-3 rounded-full bg-green-500/80" />
         </div>
         <span className="ml-2 text-xs font-mono text-gray-500">{sequence.agent}</span>
         {isActive && visibleLines < sequence.lines.length && (
-          <span className="ml-auto text-xs text-d8x-gold animate-pulse">processing...</span>
+          <span className="ml-auto text-xs text-flame animate-pulse">processing...</span>
         )}
       </div>
 
@@ -232,9 +232,9 @@ function Terminal({ sequence, isActive, onComplete }: {
       <div ref={containerRef} className="p-4 font-mono text-sm leading-relaxed h-[380px] overflow-y-auto">
         {sequence.lines.slice(0, visibleLines).map((line, i) => (
           <div key={i} className={`${
-            line.type === "command" ? "text-d8x-gold font-bold" :
+            line.type === "command" ? "text-flame font-bold" :
             line.type === "success" ? "text-green-400" :
-            line.type === "info" ? "text-d8x-blue-light" :
+            line.type === "info" ? "text-sky-400" :
             line.type === "blank" ? "h-3" :
             "text-gray-400"
           }`}>
@@ -268,13 +268,13 @@ export default function DemoPage() {
   }, [activeStep, autoPlay]);
 
   return (
-    <div className="min-h-screen bg-d8x-slate">
+    <div className="min-h-screen bg-ink-900">
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-d8x-slate/95 backdrop-blur-md border-b border-white/5">
+      <nav className="fixed top-0 w-full z-50 bg-ink-900/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl font-black tracking-tighter">
-              D8<span className="text-d8x-gold">X</span>
+              D8<span className="text-flame">X</span>
             </span>
             <span className="text-sm text-gray-500 ml-2">/ Live Walkthrough</span>
           </Link>
@@ -288,7 +288,7 @@ export default function DemoPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-            Watch D8X process a <span className="text-d8x-gold">legacy inventory system</span>
+            Watch D8X process a <span className="text-flame">legacy inventory system</span>
           </h1>
           <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto">
             4 source files in. Production-ready system out. Every agent shows its work.
@@ -306,7 +306,7 @@ export default function DemoPage() {
           <button
             onClick={() => setAutoPlay(!autoPlay)}
             className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-              autoPlay ? "bg-d8x-gold/10 text-d8x-gold border border-d8x-gold/30" : "border border-white/10 text-gray-400 hover:bg-white/5"
+              autoPlay ? "bg-flame/10 text-flame border border-flame/30" : "border border-white/10 text-gray-400 hover:bg-white/5"
             }`}
           >
             Auto-play: {autoPlay ? "ON" : "OFF"}
@@ -322,15 +322,15 @@ export default function DemoPage() {
                 onClick={() => setActiveStep(i)}
                 className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-3 ${
                   i === activeStep
-                    ? "bg-d8x-slate-light border border-d8x-blue/30 shadow-lg"
+                    ? "bg-ink-800 border border-sky-500/30 shadow-lg"
                     : completedSteps.has(i)
-                    ? "bg-d8x-slate-light/50 border border-green-500/20"
+                    ? "bg-ink-800/50 border border-green-500/20"
                     : "border border-transparent hover:bg-white/[0.03]"
                 }`}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
                   completedSteps.has(i) ? "bg-green-500/20 text-green-400" :
-                  i === activeStep ? "bg-d8x-blue/20 text-d8x-blue-light" :
+                  i === activeStep ? "bg-sky-500/20 text-sky-400" :
                   "bg-white/5 text-gray-500"
                 }`}>
                   {completedSteps.has(i) ? "✓" : `D${i + 1}`}
@@ -345,8 +345,8 @@ export default function DemoPage() {
 
             {/* Summary when all complete */}
             {completedSteps.size === 8 && (
-              <div className="mt-6 p-4 rounded-lg border border-d8x-gold/30 bg-d8x-gold/5">
-                <div className="text-sm font-bold text-d8x-gold mb-1">Pipeline Complete</div>
+              <div className="mt-6 p-4 rounded-lg border border-flame/30 bg-flame/5">
+                <div className="text-sm font-bold text-flame mb-1">Pipeline Complete</div>
                 <div className="text-xs text-gray-400">
                   8 agents processed 27,534 characters of input into a production-ready system with 34 user stories, 42 API endpoints, and full test coverage.
                 </div>

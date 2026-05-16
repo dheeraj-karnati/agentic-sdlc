@@ -22,7 +22,7 @@ interface AgentDetailPanelProps {
 
 export function AgentDetailPanel({ projectId, agentStatus, pendingGate }: AgentDetailPanelProps) {
   if (!agentStatus) {
-    return <div className="flex items-center justify-center h-64 text-d8x-text-secondary text-sm">Select a pipeline stage or start an agent to see details.</div>;
+    return <div className="flex items-center justify-center h-64 text-ink-300 text-sm">Select a pipeline stage or start an agent to see details.</div>;
   }
 
   const agent = AGENTS.find((a) => a.id === agentStatus.agent_type);
@@ -47,17 +47,17 @@ export function AgentDetailPanel({ projectId, agentStatus, pendingGate }: AgentD
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {isRunning && <Loader2 className="w-5 h-5 text-d8x-gold animate-spin" />}
-          {isCompleted && <CheckCircle2 className="w-5 h-5 text-d8x-success" />}
-          {isReview && <Eye className="w-5 h-5 text-d8x-warning" />}
-          {agentStatus.status === "paused_for_input" && <AlertTriangle className="w-5 h-5 text-d8x-warning" />}
-          {agentStatus.status === "failed" && <XCircle className="w-5 h-5 text-d8x-danger" />}
+          {isRunning && <Loader2 className="w-5 h-5 text-flame animate-spin" />}
+          {isCompleted && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+          {isReview && <Eye className="w-5 h-5 text-amber-500" />}
+          {agentStatus.status === "paused_for_input" && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+          {agentStatus.status === "failed" && <XCircle className="w-5 h-5 text-red-500" />}
           <h2 className="text-lg font-bold">{agentLabel}</h2>
           <StatusBadge status={agentStatus.status} />
         </div>
         <div className="flex items-center gap-3">
           {agentStatus.started_at && (
-            <span className="text-xs text-d8x-text-secondary">Started {new Date(agentStatus.started_at).toLocaleTimeString()}</span>
+            <span className="text-xs text-ink-300">Started {new Date(agentStatus.started_at).toLocaleTimeString()}</span>
           )}
           {(isReview || isCompleted) && (
             <ReportDownload projectId={projectId} agentType={agentStatus.agent_type} />
@@ -76,22 +76,22 @@ export function AgentDetailPanel({ projectId, agentStatus, pendingGate }: AgentD
             </div>
           )}
           {tasks.length > 0 ? (
-            <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5 space-y-3">
+            <div className="bg-ink-900 border border-ink-700 rounded-lg p-5 space-y-3">
               {tasks.map((task: any) => (
                 <div key={task.name} className="flex items-start gap-3">
                   <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${
-                    task.status === "completed" ? "bg-d8x-success" : task.status === "running" ? "bg-d8x-blue animate-pulse" : task.status === "failed" ? "bg-d8x-danger" : "bg-d8x-text-tertiary"
+                    task.status === "completed" ? "bg-emerald-500" : task.status === "running" ? "bg-sky-500 animate-pulse" : task.status === "failed" ? "bg-red-500" : "bg-ink-400"
                   }`} />
                   <div>
                     <p className="text-sm font-medium">{task.label}</p>
-                    <p className="text-xs text-d8x-text-secondary">{task.detail || (task.status === "pending" ? "Waiting" : "")}</p>
+                    <p className="text-xs text-ink-300">{task.detail || (task.status === "pending" ? "Waiting" : "")}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-d8x-gold animate-pulse" /><span className="text-sm">Agent is working...</span></div>
+            <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
+              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-flame animate-pulse" /><span className="text-sm">Agent is working...</span></div>
             </div>
           )}
         </>
@@ -104,9 +104,9 @@ export function AgentDetailPanel({ projectId, agentStatus, pendingGate }: AgentD
           {agentStatus.agent_type === "discover" && <DiscoverReport output={output} />}
           {agentStatus.agent_type === "design" && <DesignReport output={output} />}
           {!["ingest", "discover", "design"].includes(agentStatus.agent_type) && Object.keys(output).length > 0 && (
-            <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+            <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
               <h3 className="text-sm font-semibold mb-3">Output</h3>
-              <pre className="text-xs bg-d8x-background rounded p-3 overflow-auto max-h-[400px] font-mono whitespace-pre-wrap">{JSON.stringify(output, null, 2)}</pre>
+              <pre className="text-xs bg-ink-950 rounded p-3 overflow-auto max-h-[400px] font-mono whitespace-pre-wrap">{JSON.stringify(output, null, 2)}</pre>
             </div>
           )}
           {/* Improve analysis — only for ingest, before approval buttons */}
@@ -131,9 +131,9 @@ export function AgentDetailPanel({ projectId, agentStatus, pendingGate }: AgentD
 
       {/* ── FAILED STATE ── */}
       {agentStatus.status === "failed" && (
-        <div className="bg-d8x-danger/10 border border-d8x-danger/20 rounded-lg p-5">
-          <h3 className="text-sm font-semibold text-d8x-danger mb-2">Agent failed</h3>
-          {agentStatus.errors.map((e, i) => <p key={i} className="text-sm text-d8x-danger/80">{e}</p>)}
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-red-500 mb-2">Agent failed</h3>
+          {agentStatus.errors.map((e, i) => <p key={i} className="text-sm text-red-500/80">{e}</p>)}
         </div>
       )}
     </div>
