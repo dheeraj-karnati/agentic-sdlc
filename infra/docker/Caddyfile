@@ -1,0 +1,23 @@
+:80 {
+    # ── API routes → FastAPI backend ──
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+    handle /health {
+        reverse_proxy backend:8000
+    }
+
+    # ── Everything else → Next.js frontend ──
+    handle {
+        reverse_proxy frontend:3000
+    }
+
+    # Compression
+    encode gzip
+
+    # Logging
+    log {
+        output stdout
+        format console
+    }
+}

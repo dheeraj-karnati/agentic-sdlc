@@ -1,0 +1,22 @@
+# Cloudflare Tunnel configuration for d8x.ai
+#
+# Before using this:
+# 1. Install cloudflared: brew install cloudflared
+# 2. Login: cloudflared tunnel login
+# 3. Create tunnel: cloudflared tunnel create d8x
+# 4. Replace <TUNNEL_ID> below with the actual tunnel ID
+# 5. Route DNS: cloudflared tunnel route dns d8x d8x.ai
+# 6. Copy credentials JSON to infra/docker/cloudflared-creds.json
+
+tunnel: <TUNNEL_ID>
+credentials-file: /etc/cloudflared/creds.json
+
+ingress:
+  # All traffic for d8x.ai → Caddy reverse proxy
+  - hostname: d8x.ai
+    service: http://caddy:80
+    originRequest:
+      noTLSVerify: true
+
+  # Catch-all (required by cloudflared)
+  - service: http_status:404

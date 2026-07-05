@@ -35,16 +35,16 @@ export function ApprovalControls({ projectId, gateId, onDecision }: ApprovalCont
   };
 
   if (decide.isSuccess) {
-    return <p className="text-sm text-d8x-text-secondary">Decision submitted.</p>;
+    return <p className="text-sm text-ink-300">Decision submitted.</p>;
   }
 
   return (
     <>
-      <div className="flex items-center gap-3 pt-4 border-t border-d8x-border mt-4">
+      <div className="flex items-center gap-3 pt-4 border-t border-ink-700 mt-4">
         <Button
           onClick={handleApprove}
           disabled={decide.isPending}
-          className="bg-d8x-success hover:bg-d8x-success/90 text-white flex-1"
+          className="bg-emerald-500 hover:bg-emerald-500/90 text-white flex-1"
         >
           <Check className="w-4 h-4 mr-1.5" />
           Approve & Continue
@@ -53,7 +53,7 @@ export function ApprovalControls({ projectId, gateId, onDecision }: ApprovalCont
           variant="outline"
           onClick={() => setShowReviseDialog(true)}
           disabled={decide.isPending}
-          className="border-d8x-warning text-d8x-warning hover:bg-d8x-warning/10"
+          className="border-amber-500 text-amber-500 hover:bg-amber-500/10"
         >
           <RotateCcw className="w-4 h-4 mr-1.5" />
           Request Changes
@@ -62,14 +62,14 @@ export function ApprovalControls({ projectId, gateId, onDecision }: ApprovalCont
           variant="ghost"
           onClick={handleReject}
           disabled={decide.isPending}
-          className="text-d8x-danger hover:bg-d8x-danger/10"
+          className="text-red-500 hover:bg-red-500/10"
         >
           <X className="w-4 h-4" />
         </Button>
       </div>
 
       <Dialog open={showReviseDialog} onOpenChange={setShowReviseDialog}>
-        <DialogContent className="bg-d8x-surface border-d8x-border">
+        <DialogContent className="bg-ink-900 border-ink-700">
           <DialogHeader>
             <DialogTitle>Request Changes</DialogTitle>
           </DialogHeader>
@@ -77,11 +77,11 @@ export function ApprovalControls({ projectId, gateId, onDecision }: ApprovalCont
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Describe what needs to change..."
-            className="bg-d8x-background border-d8x-border min-h-[100px]"
+            className="bg-ink-950 border-ink-700 min-h-[100px]"
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowReviseDialog(false)}>Cancel</Button>
-            <Button onClick={handleRevise} disabled={!notes.trim()} className="bg-d8x-warning text-d8x-background hover:bg-d8x-warning/90">
+            <Button onClick={handleRevise} disabled={!notes.trim()} className="bg-amber-500 text-ink-950 hover:bg-amber-500/90">
               Submit Revision Request
             </Button>
           </DialogFooter>

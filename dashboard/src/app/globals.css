@@ -55,23 +55,23 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-d8x-slate text-white antialiased;
+    @apply bg-ink-950 text-white antialiased;
   }
   ::selection {
-    @apply bg-d8x-gold/30 text-white;
+    @apply bg-flame/30 text-white;
   }
 }
 
-/* ── Marketing component classes ── */
+/* ── Component classes ── */
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-8 py-4 bg-d8x-gold text-d8x-navy-deep
-           font-semibold rounded-lg hover:bg-d8x-gold-light transition-all duration-200
-           shadow-lg shadow-d8x-gold/20 hover:shadow-d8x-gold/40 hover:-translate-y-0.5;
+    @apply inline-flex items-center gap-2 px-8 py-4 bg-flame text-ink-950
+           font-semibold rounded-lg hover:bg-flame-soft transition-all duration-200
+           shadow-lg shadow-flame/20 hover:shadow-flame/40 hover:-translate-y-0.5;
   }
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-8 py-4 border-2 border-d8x-blue text-d8x-blue-light
-           font-semibold rounded-lg hover:bg-d8x-blue/10 transition-all duration-200;
+    @apply inline-flex items-center gap-2 px-8 py-4 border-2 border-sky-500 text-sky-400
+           font-semibold rounded-lg hover:bg-sky-500/10 transition-all duration-200;
   }
   .section-heading {
     @apply text-3xl md:text-4xl font-bold tracking-tight;
@@ -80,8 +80,8 @@
     @apply text-lg text-gray-400 max-w-2xl mx-auto mt-4;
   }
   .card {
-    @apply bg-d8x-slate-light border border-white/5 rounded-xl p-6
-           hover:border-d8x-blue/30 transition-all duration-300;
+    @apply bg-ink-800 border border-white/5 rounded-xl p-6
+           hover:border-sky-500/30 transition-all duration-300;
   }
 }
 
@@ -99,7 +99,7 @@
 /* ── Terminal cursor ── */
 .terminal-cursor::after {
   content: "\2588";
-  @apply animate-terminal-blink text-d8x-gold ml-0.5;
+  @apply animate-terminal-blink text-flame ml-0.5;
 }
 
 /* ── Staggered animations ── */
@@ -117,3 +117,18 @@
 .dark ::-webkit-scrollbar-track { background: #0D1117; }
 .dark ::-webkit-scrollbar-thumb { background: #30363D; border-radius: 3px; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #484F58; }
+
+/* ── New design system fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+
+/* ── Marketing page utilities ── */
+.display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+.num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+.hairline { border-color: rgba(255,255,255,0.08); }
+.hairline-strong { border-color: rgba(255,255,255,0.14); }
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}

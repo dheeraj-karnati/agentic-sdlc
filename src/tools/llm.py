@@ -140,12 +140,19 @@ async def llm_complete_json(
     provider: str | None = None,
     model: str | None = None,
     temperature: float = 0.1,
+    max_retries: int = 1,
 ) -> dict:
-    """Get a JSON response from the LLM. Parses and returns a dict."""
+    """Get a JSON response from the LLM. Parses and returns a dict.
+
+    Uses JSON mode when the provider supports it. On parse failure,
+    retries once with error feedback, then attempts repair/truncation.
+    """
+    provider = provider or settings.llm_provider
     json_system = (system or "") + (
         "\n\nRespond ONLY with valid JSON. "
         "No markdown, no code fences, no explanation. "
-        "Just the JSON object."
+        "Just the JSON object. "
+        "Keep string values concise — under 200 characters each."
     )
 
     result = await llm_complete(
@@ -155,9 +162,60 @@ async def llm_complete_json(
         model=model,
         temperature=temperature,
         max_tokens=8000,
+        # Enable JSON mode — forces the LLM to produce valid JSON
+        response_format={"type": "json_object"},
     )
 
-    # Clean response: strip markdown code fences if present
+    cleaned = _clean_json_response(result)
+
+    # Attempt 1: direct parse
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        logger.warning("JSON parse failed (%s), attempting repair", e)
+
+    # Attempt 2: repair
+    repaired = _repair_json(cleaned)
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    # Attempt 3: truncate to last valid structure
+    truncated = _truncate_to_valid_json(cleaned)
+    if truncated:
+        try:
+            parsed = json.loads(truncated)
+            logger.info("JSON repaired by truncation (kept %d of %d chars)", len(truncated), len(cleaned))
+            return parsed
+        except json.JSONDecodeError:
+            pass
+
+    # Attempt 4: retry with error feedback (one retry only)
+    if max_retries > 0:
+        logger.info("Retrying LLM call with error feedback")
+        retry_prompt = (
+            f"Your previous response was invalid JSON. The error was:\n"
+            f"  {e}\n\n"
+            f"Please respond again to the same request, but this time ensure "
+            f"your output is valid JSON. Keep all string values SHORT (under 200 chars). "
+            f"Escape quotes with backslash.\n\n"
+            f"Original request:\n{prompt}"
+        )
+        return await llm_complete_json(
+            prompt=retry_prompt,
+            system=system,
+            provider=provider,
+            model=model,
+            temperature=temperature,
+            max_retries=0,  # prevent infinite retry
+        )
+
+    raise json.JSONDecodeError("All JSON repair attempts failed", cleaned, 0)
+
+
+def _clean_json_response(result: str) -> str:
+    """Strip markdown fences and other wrapper from LLM JSON output."""
     cleaned = result.strip()
     if cleaned.startswith("```"):
         cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
@@ -165,9 +223,73 @@ async def llm_complete_json(
         cleaned = cleaned[:-3]
     if cleaned.startswith("json"):
         cleaned = cleaned[4:]
-    cleaned = cleaned.strip()
+    return cleaned.strip()
 
-    return json.loads(cleaned)
+
+def _repair_json(text: str) -> str:
+    """Attempt to repair common JSON issues from LLM output.
+
+    Handles: unterminated strings, trailing commas, truncated output.
+    """
+    import re
+
+    repaired = text
+
+    # 1. Fix unescaped control characters inside strings
+    # Replace literal newlines/tabs inside JSON strings with escaped versions
+    repaired = re.sub(r'(?<=": ")(.*?)(?=")', lambda m: m.group(0).replace("\n", "\\n").replace("\t", "\\t"), repaired, flags=re.DOTALL)
+
+    # 2. Check for unterminated string
+    in_string = False
+    i = 0
+    while i < len(repaired):
+        ch = repaired[i]
+        if ch == "\\" and in_string:
+            i += 2
+            continue
+        if ch == '"':
+            in_string = not in_string
+        i += 1
+
+    if in_string:
+        repaired += '"'
+
+    # 3. Remove trailing commas before } or ]
+    repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+
+    # 4. Close any open structures
+    opens = repaired.count("{") - repaired.count("}")
+    open_arrays = repaired.count("[") - repaired.count("]")
+    repaired += "]" * max(0, open_arrays)
+    repaired += "}" * max(0, opens)
+
+    return repaired
+
+
+def _truncate_to_valid_json(text: str) -> str | None:
+    """Find the longest valid JSON prefix by truncating at the last complete object/array.
+
+    Strategy: find the last }, try to close open structures from there.
+    """
+    import re
+
+    # Try progressively shorter truncations at } boundaries
+    for i in range(len(text) - 1, 0, -1):
+        if text[i] == "}":
+            candidate = text[: i + 1]
+            # Remove any trailing comma before the }
+            candidate = re.sub(r",\s*}", "}", candidate)
+            # Close any remaining open arrays
+            open_arrays = candidate.count("[") - candidate.count("]")
+            open_objs = candidate.count("{") - candidate.count("}")
+            candidate += "]" * max(0, open_arrays)
+            candidate += "}" * max(0, open_objs)
+            try:
+                json.loads(candidate)
+                return candidate
+            except json.JSONDecodeError:
+                continue
+    return None
 
 
 def _get_fallback(current: str) -> str | None:

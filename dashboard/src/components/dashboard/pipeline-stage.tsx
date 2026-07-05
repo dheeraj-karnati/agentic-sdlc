@@ -16,12 +16,12 @@ interface PipelineStageProps {
 }
 
 const STATUS_CLASSES: Record<StageStatus, string> = {
-  completed: "border-d8x-success/50 bg-d8x-success/5 text-d8x-success",
-  active: "border-d8x-gold/50 bg-d8x-gold/5 text-d8x-gold animate-stage-pulse",
-  paused: "border-d8x-warning/50 bg-d8x-warning/5 text-d8x-warning",
-  upcoming: "border-d8x-border bg-d8x-surface text-d8x-text-secondary",
-  failed: "border-d8x-danger/50 bg-d8x-danger/5 text-d8x-danger",
-  unavailable: "border-d8x-border bg-d8x-surface text-d8x-text-tertiary opacity-50",
+  completed: "border-emerald-500/50 bg-emerald-500/5 text-emerald-500",
+  active: "border-flame/50 bg-flame/5 text-flame animate-stage-pulse",
+  paused: "border-amber-500/50 bg-amber-500/5 text-amber-500",
+  upcoming: "border-ink-700 bg-ink-900 text-ink-300",
+  failed: "border-red-500/50 bg-red-500/5 text-red-500",
+  unavailable: "border-ink-700 bg-ink-900 text-ink-400 opacity-50",
 };
 
 function StatusIcon({ status }: { status: StageStatus }) {

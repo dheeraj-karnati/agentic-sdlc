@@ -28,10 +28,11 @@ async def _dispose_stale_pool() -> None:
     await engine.dispose()
     logger.info("Database connection pool disposed — fresh connections will use updated enum types")
 
-# CORS - allow dashboard dev server
+# CORS - configurable origins (comma-separated in .env)
+_cors_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -79,16 +79,16 @@ export function FileUploader({ files, onFilesChange }: FileUploaderProps) {
         className={cn(
           "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all",
           isDragging
-            ? "border-d8x-blue bg-d8x-blue/5"
-            : "border-d8x-border hover:border-d8x-border-hover",
+            ? "border-sky-500 bg-sky-500/5"
+            : "border-ink-700 hover:border-ink-600",
         )}
       >
-        <Upload className="w-8 h-8 mx-auto text-d8x-text-tertiary mb-3" />
-        <p className="text-sm font-medium text-d8x-text-primary">Drop files to analyze</p>
-        <p className="text-xs text-d8x-text-secondary mt-1">BRDs, source code, recordings, diagrams — any format</p>
+        <Upload className="w-8 h-8 mx-auto text-ink-400 mb-3" />
+        <p className="text-sm font-medium text-ink-50">Drop files to analyze</p>
+        <p className="text-xs text-ink-300 mt-1">BRDs, source code, recordings, diagrams — any format</p>
         <div className="flex flex-wrap justify-center gap-1.5 mt-4">
           {FILE_TYPES.map((ft) => (
-            <span key={ft.ext} className={cn("text-[10px] px-1.5 py-0.5 rounded border border-d8x-border", ft.color)}>{ft.ext}</span>
+            <span key={ft.ext} className={cn("text-[10px] px-1.5 py-0.5 rounded border border-ink-700", ft.color)}>{ft.ext}</span>
           ))}
         </div>
         <input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => e.target.files && addFiles(e.target.files)} />
@@ -100,14 +100,14 @@ export function FileUploader({ files, onFilesChange }: FileUploaderProps) {
           value={urlInput}
           onChange={(e) => setUrlInput(e.target.value)}
           placeholder="S3, GCS, SharePoint, or HTTP URL"
-          className="bg-d8x-background border-d8x-border text-sm"
+          className="bg-ink-950 border-ink-700 text-sm"
         />
         <Button
           variant="outline"
           size="sm"
           disabled={!urlInput.trim()}
           onClick={() => { /* URL import handled at parent level */ setUrlInput(""); }}
-          className="border-d8x-border shrink-0"
+          className="border-ink-700 shrink-0"
         >
           <Link2 className="w-4 h-4 mr-1" />
           Import
@@ -116,23 +116,23 @@ export function FileUploader({ files, onFilesChange }: FileUploaderProps) {
 
       {/* File list */}
       {files.length > 0 && (
-        <div className="border border-d8x-border rounded-lg divide-y divide-d8x-border">
+        <div className="border border-ink-700 rounded-lg divide-y divide-ink-700">
           {files.map((f, i) => {
             const Icon = getFileIcon(f.name);
             const badge = getTypeBadge(f.name);
             return (
-              <div key={i} className="flex items-center gap-3 px-3 py-2 hover:bg-d8x-surface-hover transition-colors">
-                <Icon className="w-4 h-4 text-d8x-text-secondary shrink-0" />
+              <div key={i} className="flex items-center gap-3 px-3 py-2 hover:bg-ink-850 transition-colors">
+                <Icon className="w-4 h-4 text-ink-300 shrink-0" />
                 <span className="text-sm truncate flex-1">{f.name}</span>
                 <span className={cn("text-[10px] px-1.5 py-0.5 rounded border", badge.cls)}>{badge.label}</span>
-                <span className="text-xs text-d8x-text-tertiary">{formatSize(f.size)}</span>
-                <button onClick={() => removeFile(i)} className="text-d8x-text-tertiary hover:text-d8x-danger transition-colors">
+                <span className="text-xs text-ink-400">{formatSize(f.size)}</span>
+                <button onClick={() => removeFile(i)} className="text-ink-400 hover:text-red-500 transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             );
           })}
-          <div className="px-3 py-2 text-xs text-d8x-text-secondary">
+          <div className="px-3 py-2 text-xs text-ink-300">
             {files.length} file{files.length !== 1 ? "s" : ""}, {formatSize(totalSize)} total
           </div>
         </div>

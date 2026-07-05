@@ -36,7 +36,7 @@ export function PipelineBar({ projectStatus, activeRunStatus, onStageClick }: Pi
   const currentAgent = STATUS_TO_AGENT[projectStatus];
 
   return (
-    <div className="flex items-center justify-center gap-0 px-4 py-4 bg-d8x-surface border-b border-d8x-border overflow-x-auto">
+    <div className="flex items-center justify-center gap-0 px-4 py-4 bg-ink-900 border-b border-ink-700 overflow-x-auto">
       {AGENTS.map((agent, i) => {
         const status = getStageStatus(agent.id, projectStatus, activeRunStatus, completed);
         const nextStatus = i < AGENTS.length - 1

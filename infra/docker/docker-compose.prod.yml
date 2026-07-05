@@ -1,0 +1,131 @@
+# D8X Production Stack — d8x.ai
+#
+# Usage:
+#   docker compose -f infra/docker/docker-compose.prod.yml build
+#   docker compose -f infra/docker/docker-compose.prod.yml up -d
+#
+# Prerequisites:
+#   1. Copy .env.production to project root as .env
+#   2. Set up Cloudflare Tunnel (see cloudflared-config.yml)
+#   3. Place tunnel credentials at infra/docker/cloudflared-creds.json
+
+services:
+  # ─── PostgreSQL with pgvector ───
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: d8x-postgres
+    environment:
+      POSTGRES_DB: agentic_sdlc
+      POSTGRES_USER: sdlc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sdlc_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sdlc -d agentic_sdlc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Redis ───
+  redis:
+    image: redis:7-alpine
+    container_name: d8x-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── MinIO (S3-compatible storage) ───
+  minio:
+    image: minio/minio:latest
+    container_name: d8x-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── FastAPI Backend ───
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.backend
+    container_name: d8x-backend
+    env_file:
+      - ../../.env.production
+    environment:
+      # Override connection strings to use Docker service names
+      DATABASE_URL: postgresql+asyncpg://sdlc:${POSTGRES_PASSWORD:-sdlc_password}@postgres:5432/agentic_sdlc
+      DATABASE_URL_SYNC: postgresql://sdlc:${POSTGRES_PASSWORD:-sdlc_password}@postgres:5432/agentic_sdlc
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  # ─── Next.js Frontend ───
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://d8x.ai
+    container_name: d8x-frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ─── Caddy Reverse Proxy ───
+  caddy:
+    image: caddy:2-alpine
+    container_name: d8x-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+  # ─── Cloudflare Tunnel ───
+  # Connects d8x.ai to this server without port forwarding
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: d8x-tunnel
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+      - ./cloudflared-creds.json:/etc/cloudflared/creds.json:ro
+    depends_on:
+      - caddy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

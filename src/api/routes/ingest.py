@@ -81,42 +81,74 @@ async def upload_files(
     for upload in files:
         try:
             content = await upload.read()
+            filename = upload.filename or "unnamed"
+
+            # ─── ZIP extraction: expand archive into individual files ───
+            if filename.lower().endswith((".zip",)):
+                from src.services.archive_extractor import extract_zip
+
+                extraction = extract_zip(content, filename)
+                errors.extend(extraction.errors)
+
+                if not extraction.files:
+                    errors.append(f"No extractable files found in {filename}")
+                    continue
+
+                logger.info("Extracted %d files from %s", len(extraction.files), filename)
+
+                for ef in extraction.files:
+                    # Store each extracted file in S3
+                    s3_key = f"projects/{project_id}/uploads/extracted/{ef.relative_path}"
+                    try:
+                        from src.services.storage import get_storage
+                        storage = get_storage()
+                        storage.upload_bytes(ef.content, s3_key, _guess_content_type(ef.relative_path))
+                    except Exception as s3_err:
+                        errors.append(f"Failed to store extracted file {ef.relative_path}: {s3_err}")
+                        continue
+
+                    art_type = _classify_artifact_type(ef.relative_path)
+                    inline = _try_inline_content(ef.content, ef.relative_path, ef.size_bytes)
+
+                    artifact = Artifact(
+                        project_id=project_id,
+                        type=art_type,
+                        name=ef.relative_path,
+                        s3_key=s3_key,
+                        content=inline,
+                        metadata_={
+                            "original_filename": ef.relative_path,
+                            "content_type": _guess_content_type(ef.relative_path),
+                            "size_bytes": ef.size_bytes,
+                            "source_type": "extracted",
+                            "archive_source": ef.archive_source,
+                        },
+                    )
+                    db.add(artifact)
+
+                # Create a summary ResolvedFile for the ZIP itself
+                zip_result = await resolver.resolve_upload(
+                    filename=filename, content=content,
+                    content_type=upload.content_type or "application/zip",
+                )
+                resolved.append(zip_result)
+                continue
+
+            # ─── Regular file upload ───
             result = await resolver.resolve_upload(
-                filename=upload.filename or "unnamed",
+                filename=filename,
                 content=content,
                 content_type=upload.content_type or "",
             )
             resolved.append(result)
 
-            # Create an Artifact record so the Ingest agent can find this file
-            ext = (upload.filename or "").rsplit(".", 1)[-1].lower() if "." in (upload.filename or "") else ""
-            if ext in ("py", "js", "ts", "tsx", "java", "cs", "go", "rs", "rb", "sql"):
-                art_type = ArtifactType.CODE
-            elif ext in ("png", "jpg", "jpeg", "gif", "svg", "webp"):
-                art_type = ArtifactType.DIAGRAM
-            else:
-                art_type = ArtifactType.DOCUMENT
-
-            # Store small text files inline, large/binary files by S3 key
-            inline_content = None
-            text_extensions = (".md", ".txt", ".py", ".js", ".ts", ".sql", ".json", ".yaml", ".yml",
-                               ".html", ".css", ".xml", ".csv", ".toml", ".ini", ".sh", ".java", ".go",
-                               ".rb", ".cs", ".rs", ".kt", ".swift")
-            fname = (upload.filename or "").lower()
-            is_text = (
-                result.content_type.startswith(("text/", "application/json", "application/xml"))
-                or fname.endswith(text_extensions)
-            )
-            if result.size_bytes < 500_000 and is_text:
-                try:
-                    inline_content = content.decode("utf-8", errors="replace")
-                except Exception:
-                    pass
+            art_type = _classify_artifact_type(filename)
+            inline_content = _try_inline_content(content, filename, result.size_bytes)
 
             artifact = Artifact(
                 project_id=project_id,
                 type=art_type,
-                name=upload.filename or "unnamed",
+                name=filename,
                 s3_key=result.s3_key,
                 content=inline_content,
                 metadata_={
@@ -142,6 +174,82 @@ async def upload_files(
         "total_bytes": total_bytes,
         "errors": errors,
     }
+
+
+# ─── Helpers ───
+
+# Extended text extensions including enterprise languages
+_TEXT_EXTENSIONS: tuple[str, ...] = (
+    ".md", ".txt", ".py", ".js", ".ts", ".tsx", ".jsx", ".sql", ".json", ".yaml", ".yml",
+    ".html", ".htm", ".css", ".xml", ".csv", ".toml", ".ini", ".sh", ".java", ".go",
+    ".rb", ".cs", ".rs", ".kt", ".swift", ".scala", ".groovy", ".php", ".c", ".cpp", ".h", ".hpp",
+    # Enterprise languages
+    ".cbl", ".cob", ".cpy", ".jcl", ".proc",  # COBOL / Mainframe
+    ".rpg", ".rpgle", ".clp",  # RPG (AS/400)
+    ".p", ".w", ".i", ".cls",  # Progress 4GL
+    ".pls", ".pks", ".pkb", ".trg", ".fnc", ".prc", ".vw",  # PL/SQL
+    ".bas", ".frm", ".vbs", ".asp", ".asa",  # VB6 / Classic ASP
+    ".pbl", ".srf", ".srd", ".psr",  # PowerBuilder
+    ".jsp", ".jspx", ".xhtml", ".ftl", ".vm",  # Java views
+    ".bat", ".cmd", ".ps1",  # Scripts
+    ".properties", ".cfg", ".conf",  # Config
+    ".rst", ".adoc",  # Docs
+)
+
+_CODE_EXTENSIONS: set[str] = {
+    "py", "js", "ts", "tsx", "jsx", "java", "cs", "go", "rs", "rb", "sql", "php",
+    "c", "cpp", "h", "hpp", "swift", "kt", "scala", "groovy",
+    "cbl", "cob", "cpy", "jcl", "proc", "rpg", "rpgle",
+    "p", "w", "i", "cls", "pls", "pks", "pkb", "trg", "fnc", "prc", "vw",
+    "bas", "frm", "vbs", "asp", "asa", "pbl", "srf",
+    "bat", "cmd", "ps1", "sh",
+}
+
+_IMAGE_EXTENSIONS: set[str] = {"png", "jpg", "jpeg", "gif", "svg", "webp", "bmp", "tiff", "ico"}
+
+
+def _classify_artifact_type(filename: str) -> ArtifactType:
+    """Determine ArtifactType from filename extension."""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext in _CODE_EXTENSIONS:
+        return ArtifactType.CODE
+    if ext in _IMAGE_EXTENSIONS:
+        return ArtifactType.DIAGRAM
+    if ext in ("sql",):
+        return ArtifactType.SCHEMA
+    return ArtifactType.DOCUMENT
+
+
+def _try_inline_content(content: bytes, filename: str, size_bytes: int) -> str | None:
+    """Try to store file content inline if it's text and under 500KB."""
+    fname_lower = filename.lower()
+    is_text = fname_lower.endswith(_TEXT_EXTENSIONS)
+    if size_bytes < 500_000 and is_text:
+        try:
+            return content.decode("utf-8", errors="replace")
+        except Exception:
+            pass
+    return None
+
+
+def _guess_content_type(filename: str) -> str:
+    """Guess MIME content type from filename."""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    mapping = {
+        "java": "text/x-java-source", "py": "text/x-python", "js": "text/javascript",
+        "ts": "text/typescript", "sql": "text/x-sql", "xml": "application/xml",
+        "json": "application/json", "yaml": "text/yaml", "yml": "text/yaml",
+        "html": "text/html", "css": "text/css", "md": "text/markdown",
+        "txt": "text/plain", "properties": "text/plain", "cfg": "text/plain",
+        "cbl": "text/x-cobol", "cob": "text/x-cobol", "cpy": "text/x-cobol",
+        "jcl": "text/plain", "rpg": "text/plain",
+        "p": "text/plain", "w": "text/plain", "i": "text/plain",
+        "pls": "text/x-plsql", "pks": "text/x-plsql", "pkb": "text/x-plsql",
+        "pdf": "application/pdf", "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "zip": "application/zip",
+    }
+    return mapping.get(ext, "application/octet-stream")
 
 
 @router.post("/import", response_model=IngestResponse, status_code=201)

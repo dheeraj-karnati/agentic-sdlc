@@ -441,25 +441,47 @@ async def _run_ingest_agent(
                 {"name": "quality_assessment", "label": "Assessing quality", "status": "pending", "detail": ""},
             ]
 
-            # Smart file classification using simulation_data
-            from src.api.services.simulation_data import classify_file, compute_quality_score, detect_scenario
+            # Smart file classification using enterprise classifier
+            from src.agents.ingest.skills.enterprise_classifier_skill import classify_file as enterprise_classify
+            from src.api.services.simulation_data import compute_quality_score, detect_scenario
 
             processed_files = []
             for fi in file_inputs:
                 fname = fi["filename"]
                 actual_wc = fi.get("word_count_estimate", 500)
-                classification = classify_file(fname)
-                # Use actual word count if available, else smart estimate
-                wc = actual_wc if actual_wc and actual_wc > 100 else classification["word_count"]
+                wc = actual_wc if actual_wc and actual_wc > 100 else 500
+
+                # Enterprise classification (role + tier + language)
+                classified = enterprise_classify(fname)
+
                 ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else ""
+                # Map role to legacy file_type for backward compat with quality scorer
+                role_to_type = {
+                    "controller": "source_code", "service": "source_code",
+                    "entity": "source_code", "repository": "source_code",
+                    "stored_procedure": "database_schema", "migration": "database_schema",
+                    "config": "configuration", "build_file": "configuration",
+                    "documentation": "document", "test": "source_code",
+                    "dto": "source_code", "util": "source_code",
+                    "view": "source_code", "copybook": "source_code",
+                    "jcl": "source_code", "generated": "source_code",
+                }
+                file_type = role_to_type.get(classified.role.value, "document")
+
                 processed_files.append({
                     "filename": fname,
-                    "file_type": classification["file_type"],
-                    "subcategory": classification["subcategory"],
+                    "file_type": file_type,
+                    "subcategory": classified.role.value,
                     "extension": ext,
                     "word_count": wc,
-                    "description": classification["description"],
+                    "description": f"{classified.language} {classified.role.value}",
                     "status": "processed",
+                    # New fields from enterprise classifier
+                    "role": classified.role.value,
+                    "tier": classified.tier,
+                    "language": classified.language,
+                    "package_path": classified.package_path,
+                    "group_key": classified.group_key,
                 })
 
             total_words = sum(f["word_count"] for f in processed_files)
@@ -467,6 +489,13 @@ async def _run_ingest_agent(
             for f in processed_files:
                 type_counts[f["file_type"]] = type_counts.get(f["file_type"], 0) + 1
             has_code = "source_code" in type_counts or "database_schema" in type_counts
+
+            # Role/tier summary for metrics
+            role_counts: dict[str, int] = {}
+            tier_counts: dict[int, int] = {1: 0, 2: 0, 3: 0}
+            for f in processed_files:
+                role_counts[f["role"]] = role_counts.get(f["role"], 0) + 1
+                tier_counts[f["tier"]] = tier_counts.get(f["tier"], 0) + 1
 
             # Detect scenario and project type
             all_filenames = [f["filename"] for f in processed_files]
@@ -543,42 +572,224 @@ async def _run_ingest_agent(
             tasks_progress[3]["status"] = "completed"
             tasks_progress[3]["detail"] = f"Quality score: {quality_score}/100"
 
-            # ─── Store actual file content in business_context for Discover ───
+            # ─── Parse, extract structure, group, and store in business_context ───
             try:
                 from src.context_store.repository import BusinessContextRepository
+                from src.agents.ingest.unstructured_parser import parse_content
+                from src.agents.ingest.skills.code_structure_skill import extract_code_structure
+                from src.agents.ingest.skills.enterprise_classifier_skill import classify_file as ec_classify, ClassifiedFile
+                from src.agents.ingest.skills.package_grouping_skill import group_files, build_group_content, build_tier3_summary
+
                 repo = BusinessContextRepository(session)
+
+                # Step 1: Load all file contents + parse + extract structure
+                file_contents: dict[str, str] = {}
+                code_structures: dict[str, object] = {}
+                classified_list: list[ClassifiedFile] = []
+                parsed_elements: dict[str, dict] = {}  # filename -> {elements, element_summary, ...}
 
                 for artifact in uploaded:
                     file_content = artifact.content or ""
+
+                    # Download from S3 if content is NULL (large files)
+                    if not file_content and artifact.s3_key:
+                        try:
+                            from src.services.storage import get_storage
+                            storage = get_storage()
+                            raw_bytes = storage.download_bytes(artifact.s3_key)
+                            file_content = raw_bytes.decode("utf-8", errors="replace")
+                            max_len = 50_000 if artifact.type == ArtifactType.DOCUMENT else 30_000
+                            if len(file_content) > max_len:
+                                half = max_len // 2
+                                file_content = file_content[:half] + "\n\n... [truncated] ...\n\n" + file_content[-half:]
+                        except Exception as dl_err:
+                            logger.warning("Failed to download %s from S3: %s", artifact.name, dl_err)
+
                     if not file_content:
-                        # Try to read from S3 if content is not in DB
                         file_content = f"File: {artifact.name}\nType: {artifact.type.value if artifact.type else 'unknown'}"
+
+                    file_contents[artifact.name] = file_content
+
+                    # Parse with unstructured
+                    parsed = parse_content(file_content, artifact.name)
+                    parsed_elements[artifact.name] = {
+                        "elements": [e.model_dump() for e in parsed.elements[:200]],
+                        "element_summary": parsed.element_summary,
+                        "parser_used": parsed.parser_used,
+                        "parse_errors": parsed.parse_errors,
+                        "parsed_text": parsed.text,
+                    }
+
+                    # Classify file
+                    classified = ec_classify(artifact.name)
+                    classified_list.append(classified)
+
+                    # Extract code structure for code files
+                    if classified.language not in ("markdown", "text", "pdf", "docx", "xlsx", "csv", "unknown", "json", "yaml", "xml", "html", "css"):
+                        try:
+                            cs = extract_code_structure(file_content, artifact.name, classified.language)
+                            code_structures[artifact.name] = cs
+                        except Exception:
+                            pass
+
+                # Step 2: Group files
+                grouping = group_files(classified_list, file_contents, code_structures)
+
+                # Step 3: Store Tier 1 files individually
+                for gf in grouping.tier1_files:
+                    # Look up by both filename and relative_path (ZIP extracts use paths as names)
+                    pe = parsed_elements.get(gf.relative_path, parsed_elements.get(gf.filename, {}))
+                    content = pe.get("parsed_text", "") or file_contents.get(gf.relative_path, file_contents.get(gf.filename, ""))
+                    cs_data = code_structures.get(gf.relative_path, code_structures.get(gf.filename))
+
+                    metadata: dict = {
+                        "file_type": "document" if gf.role == "documentation" else "code",
+                        "filename": gf.filename,
+                        "elements": pe.get("elements", []),
+                        "element_summary": pe.get("element_summary", {}),
+                        "parser_used": pe.get("parser_used", "unknown"),
+                        "parse_errors": pe.get("parse_errors", []),
+                        "role": gf.role,
+                        "tier": 1,
+                        "language": gf.language,
+                    }
+                    if cs_data:
+                        metadata["code_structure"] = cs_data.model_dump() if hasattr(cs_data, "model_dump") else {}
 
                     await repo.store_context(
                         project_id=project_id,
                         category="ingested_source",
-                        title=f"Source: {artifact.name}",
-                        content=file_content[:15000],
+                        title=f"Source: {gf.filename}",
+                        content=content[:15000],
+                        source_agent=AgentType.INGEST,
+                        metadata=metadata,
+                    )
+
+                # Step 4: Store Tier 2 groups
+                for group in grouping.tier2_groups:
+                    group_content = build_group_content(group)
+                    await repo.store_context(
+                        project_id=project_id,
+                        category="ingested_source",
+                        title=f"Group: {group.group_key} ({group.file_count} files)",
+                        content=group_content[:15000],
                         source_agent=AgentType.INGEST,
                         metadata={
-                            "file_type": artifact.type.value if artifact.type else "unknown",
-                            "filename": artifact.name,
+                            "file_type": "code_group",
+                            "group_key": group.group_key,
+                            "language": group.language,
+                            "file_count": group.file_count,
+                            "roles": group.roles,
+                            "tier": 2,
+                            "filenames": [f.filename for f in group.files],
                         },
                     )
+
+                # Step 5: Store Tier 3 summary (one entry)
+                if grouping.tier3_summary:
+                    t3_content = build_tier3_summary(grouping.tier3_summary, grouping.tier3_files)
+                    await repo.store_context(
+                        project_id=project_id,
+                        category="ingested_source",
+                        title=f"Tier 3 summary ({sum(grouping.tier3_summary.values())} files)",
+                        content=t3_content[:15000],
+                        source_agent=AgentType.INGEST,
+                        metadata={
+                            "file_type": "tier3_summary",
+                            "tier": 3,
+                            "role_counts": grouping.tier3_summary,
+                            "file_count": len(grouping.tier3_files),
+                        },
+                    )
+
                 await session.commit()
-                logger.info("Stored %d source files in business_context", len(uploaded))
+                stored_count = len(grouping.tier1_files) + len(grouping.tier2_groups) + (1 if grouping.tier3_summary else 0)
+                logger.info(
+                    "Stored %d entries in business_context (%d tier1, %d tier2 groups, %s tier3)",
+                    stored_count, len(grouping.tier1_files), len(grouping.tier2_groups),
+                    "1 summary" if grouping.tier3_summary else "none",
+                )
             except Exception as store_err:
                 logger.warning("Failed to store sources in business_context: %s", store_err)
 
-            # ─── LLM analysis of ingested content ───
+            # ─── Tiered LLM analysis (concurrent) ───
             llm_analysis = None
             try:
-                from src.agents.ingest.llm_analysis import analyze_ingested_content
-                llm_analysis = await analyze_ingested_content(processed_files)
-                logger.info("LLM analysis complete: domain=%s, type=%s",
-                            llm_analysis.get("domain"), llm_analysis.get("project_type"))
+                from src.agents.ingest.tiered_analysis import (
+                    analyze_tier1_file,
+                    analyze_tier2_group,
+                    analyze_project_overall,
+                )
 
-                # Enrich processed files with LLM insights
+                llm_semaphore = _asyncio.Semaphore(5)
+
+                # Tier 1: individual analysis for high-value files
+                async def _analyze_t1(gf):
+                    async with llm_semaphore:
+                        cs_data = code_structures.get(gf.relative_path, code_structures.get(gf.filename))
+                        pe = parsed_elements.get(gf.relative_path, parsed_elements.get(gf.filename, {}))
+                        return await analyze_tier1_file(
+                            filename=gf.filename,
+                            content=file_contents.get(gf.relative_path, file_contents.get(gf.filename, "")),
+                            role=gf.role,
+                            language=gf.language,
+                            code_structure=cs_data.model_dump() if hasattr(cs_data, "model_dump") else cs_data,
+                            element_summary=pe.get("element_summary"),
+                        )
+
+                # Tier 2: group-level analysis
+                async def _analyze_t2(group):
+                    async with llm_semaphore:
+                        from src.agents.ingest.skills.package_grouping_skill import build_group_content
+                        group_text = build_group_content(group)
+                        return await analyze_tier2_group(
+                            group_key=group.group_key,
+                            group_content=group_text,
+                            file_count=group.file_count,
+                            roles=group.roles,
+                            language=group.language,
+                        )
+
+                # Update progress
+                tasks_progress[3]["detail"] = f"Analyzing {len(grouping.tier1_files)} key files + {len(grouping.tier2_groups)} groups..."
+                result = await session.execute(select(AgentRun).where(AgentRun.id == run_id))
+                run = result.scalar_one()
+                run.output_summary["tasks"] = tasks_progress
+                await session.commit()
+
+                # Run tier 1 + tier 2 concurrently
+                tier1_results_raw = await _asyncio.gather(
+                    *[_analyze_t1(gf) for gf in grouping.tier1_files],
+                    return_exceptions=True,
+                )
+                tier2_results_raw = await _asyncio.gather(
+                    *[_analyze_t2(g) for g in grouping.tier2_groups],
+                    return_exceptions=True,
+                )
+
+                # Filter out exceptions
+                tier1_results = [r for r in tier1_results_raw if isinstance(r, dict)]
+                tier2_results = [r for r in tier2_results_raw if isinstance(r, dict)]
+                t1_errors = sum(1 for r in tier1_results_raw if isinstance(r, Exception))
+                t2_errors = sum(1 for r in tier2_results_raw if isinstance(r, Exception))
+                if t1_errors or t2_errors:
+                    logger.warning("LLM analysis: %d tier1 errors, %d tier2 errors", t1_errors, t2_errors)
+
+                # Final project-level synthesis
+                llm_analysis = await analyze_project_overall(
+                    tier1_results=tier1_results,
+                    tier2_results=tier2_results,
+                    tier3_summary=grouping.tier3_summary,
+                    total_files=len(uploaded),
+                )
+
+                logger.info(
+                    "Tiered LLM analysis complete: %d T1 + %d T2 calls, domain=%s, type=%s",
+                    len(tier1_results), len(tier2_results),
+                    llm_analysis.get("domain"), llm_analysis.get("project_type"),
+                )
+
+                # Enrich processed_files with tier1 assessments
                 for assessment in llm_analysis.get("file_assessments", []):
                     for pf in processed_files:
                         if pf["filename"] == assessment.get("filename"):
@@ -587,20 +798,36 @@ async def _run_ingest_agent(
                             pf["summary"] = assessment.get("summary", "")
                             pf["importance"] = assessment.get("estimated_importance", "medium")
 
-                # Use LLM's project type if available
                 if llm_analysis.get("project_type"):
                     project_type = llm_analysis["project_type"]
 
             except Exception as llm_err:
-                logger.warning("LLM analysis failed (using rule-based): %s", llm_err)
+                logger.warning("Tiered LLM analysis failed: %s", llm_err)
+                # Fallback to old single-prompt analysis
+                try:
+                    from src.agents.ingest.llm_analysis import analyze_ingested_content
+                    llm_analysis = await analyze_ingested_content(processed_files)
+                    if llm_analysis and llm_analysis.get("project_type"):
+                        project_type = llm_analysis["project_type"]
+                    logger.info("Fallback LLM analysis succeeded")
+                except Exception as fb_err:
+                    logger.warning("Fallback LLM analysis also failed: %s", fb_err)
 
             output = {
                 "tasks": tasks_progress,
-                "metrics": {"files_processed": len(file_inputs), "total_files": len(file_inputs), "words_extracted": total_words, "sources_classified": len(file_inputs), "quality_score": quality_score},
+                "metrics": {
+                    "files_processed": len(file_inputs), "total_files": len(file_inputs),
+                    "words_extracted": total_words, "sources_classified": len(file_inputs),
+                    "quality_score": quality_score,
+                    "tier_1_files": tier_counts.get(1, 0),
+                    "tier_2_files": tier_counts.get(2, 0),
+                    "tier_3_files": tier_counts.get(3, 0),
+                },
                 "processed_files": processed_files,
                 "project_type": project_type,
                 "scenario": scenario,
                 "type_breakdown": type_counts,
+                "role_breakdown": role_counts,
                 "quality_assessment": {"score": quality_score, "completeness": quality["completeness"], "diversity": quality["diversity"], "volume": quality["volume"], "warnings": quality["warnings"]},
             }
             if llm_analysis:

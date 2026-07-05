@@ -38,7 +38,7 @@ const ENTITY_TYPE_BADGE: Record<string, string> = {
   transaction: "bg-teal-500/15 text-teal-400",
   reference: "bg-gray-500/15 text-gray-400",
   junction: "bg-indigo-500/15 text-indigo-400",
-  document: "bg-yellow-500/15 text-yellow-400",
+  document: "bg-amber-500/15 text-amber-400",
   system: "bg-gray-500/15 text-gray-400",
   process: "bg-teal-500/15 text-teal-400",
 };
@@ -52,6 +52,7 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
   const questions = (output.clarification_questions ?? []) as any[];
   const understanding = output.system_understanding ?? {};
   const qa = output.quality_assessment ?? {};
+  const parseWarnings = (output.parse_warnings ?? []) as any[];
   const score = metrics.quality_score ?? qa.score ?? 0;
 
   // Separate conflicts by category
@@ -71,10 +72,10 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
   return (
     <div className="space-y-5">
       {/* ── Section 1: Summary banner ── */}
-      <div className="border-l-4 border-d8x-success bg-d8x-surface rounded-r-lg p-5 flex items-center justify-between">
+      <div className="border-l-4 border-emerald-500 bg-ink-900 rounded-r-lg p-5 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold">Discovery complete</h2>
-          <p className="text-sm text-d8x-text-secondary mt-1">
+          <p className="text-sm text-ink-300 mt-1">
             Analyzed all sources and extracted {rules.length} business rules, {entities.length} entities
             {conflicts.length > 0 ? `, and found ${conflicts.length} issue${conflicts.length > 1 ? "s" : ""}` : ""}.
           </p>
@@ -88,9 +89,24 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
         {score > 0 && <QualityScore score={score} size={72} />}
       </div>
 
+      {/* ── Parse warnings ── */}
+      {parseWarnings.length > 0 && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-4">
+          <p className="text-sm text-amber-400 font-medium mb-2">
+            {parseWarnings.length} file{parseWarnings.length > 1 ? "s" : ""} had partial analysis
+          </p>
+          {parseWarnings.map((w: any, i: number) => (
+            <div key={i} className="text-xs text-ink-300 mt-1">
+              <span className="font-medium text-ink-50">{w.filename}</span>
+              {" — "}{w.impact}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Section 2: Security & Vulnerabilities (shown first if critical) ── */}
       {securityIssues.length > 0 && (
-        <div className="bg-d8x-surface border border-red-500/30 rounded-lg p-5">
+        <div className="bg-ink-900 border border-red-500/30 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Shield className="w-4 h-4 text-red-400" />
             Security vulnerabilities ({securityIssues.length})
@@ -109,20 +125,20 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
                     {(c.type ?? "").replace(/_/g, " ")}
                   </span>
                   {c.location && (
-                    <span className="text-[10px] text-d8x-text-tertiary flex items-center gap-1">
+                    <span className="text-[10px] text-ink-400 flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {c.location}
                     </span>
                   )}
                   {c.source_a && (
-                    <span className="text-[10px] text-d8x-text-tertiary">
+                    <span className="text-[10px] text-ink-400">
                       {c.source_a}{c.source_b && c.source_b !== c.source_a ? ` → ${c.source_b}` : ""}
                     </span>
                   )}
                 </div>
                 {c.resolution_options && c.resolution_options.length > 0 && (
-                  <div className="mt-2 pl-2 border-l-2 border-d8x-border">
+                  <div className="mt-2 pl-2 border-l-2 border-ink-700">
                     {(c.resolution_options as string[]).map((opt: string, j: number) => (
-                      <p key={j} className="text-[11px] text-d8x-text-secondary">→ {opt}</p>
+                      <p key={j} className="text-[11px] text-ink-300">→ {opt}</p>
                     ))}
                   </div>
                 )}
@@ -134,14 +150,14 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 3: Bugs & Defects ── */}
       {bugIssues.length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-warning/30 rounded-lg p-5">
+        <div className="bg-ink-900 border border-amber-500/30 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Bug className="w-4 h-4 text-d8x-warning" />
+            <Bug className="w-4 h-4 text-amber-500" />
             Bugs & defects ({bugIssues.length})
           </h3>
           <div className="space-y-2">
             {bugIssues.map((c: any, i: number) => (
-              <div key={i} className="bg-d8x-warning/5 border border-d8x-warning/15 rounded-lg p-3">
+              <div key={i} className="bg-amber-500/5 border border-amber-500/15 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-medium ${SEVERITY_BADGE[c.severity] ?? SEVERITY_BADGE.medium}`}>
                     {c.severity}
@@ -153,7 +169,7 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
                     {(c.type ?? "").replace(/_/g, " ")}
                   </span>
                   {c.location && (
-                    <span className="text-[10px] text-d8x-text-tertiary flex items-center gap-1">
+                    <span className="text-[10px] text-ink-400 flex items-center gap-1">
                       <MapPin className="w-3 h-3" /> {c.location}
                     </span>
                   )}
@@ -166,14 +182,14 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 4: Data Conflicts & Gaps ── */}
       {dataConflicts.length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-d8x-blue" />
+            <AlertTriangle className="w-4 h-4 text-sky-500" />
             Conflicts & gaps ({dataConflicts.length})
           </h3>
           <div className="space-y-2">
             {dataConflicts.map((c: any, i: number) => (
-              <div key={i} className="bg-d8x-background border border-d8x-border rounded-lg p-3">
+              <div key={i} className="bg-ink-950 border border-ink-700 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-medium ${SEVERITY_BADGE[c.severity] ?? SEVERITY_BADGE.medium}`}>
                     {c.severity}
@@ -185,7 +201,7 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
                     {(c.type ?? "").replace(/_/g, " ")}
                   </span>
                   {c.source_a && c.source_b && c.source_a !== c.source_b && (
-                    <span className="text-[10px] text-d8x-text-tertiary">
+                    <span className="text-[10px] text-ink-400">
                       {c.source_a} ↔ {c.source_b}
                     </span>
                   )}
@@ -198,12 +214,12 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 5: Business rules ── */}
       {rules.length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-4">Business rules ({rules.length})</h3>
-          <div className="border border-d8x-border rounded-lg overflow-hidden">
+          <div className="border border-ink-700 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-d8x-background text-d8x-text-secondary text-left text-xs">
+                <tr className="bg-ink-950 text-ink-300 text-left text-xs">
                   <th className="px-4 py-2.5 font-medium w-16">ID</th>
                   <th className="px-4 py-2.5 font-medium">Rule</th>
                   <th className="px-4 py-2.5 font-medium">Source</th>
@@ -212,13 +228,13 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
               </thead>
               <tbody>
                 {rules.map((r: any, i: number) => (
-                  <tr key={i} className="border-t border-d8x-border group">
-                    <td className="px-4 py-2.5 text-xs text-d8x-text-tertiary font-mono">{r.id ?? `BR-${String(i + 1).padStart(3, "0")}`}</td>
+                  <tr key={i} className="border-t border-ink-700 group">
+                    <td className="px-4 py-2.5 text-xs text-ink-400 font-mono">{r.id ?? `BR-${String(i + 1).padStart(3, "0")}`}</td>
                     <td className="px-4 py-2.5">
-                      <p className="font-medium text-d8x-text-primary">{r.name}</p>
-                      <p className="text-xs text-d8x-text-secondary mt-0.5 line-clamp-2">{r.description}</p>
+                      <p className="font-medium text-ink-50">{r.name}</p>
+                      <p className="text-xs text-ink-300 mt-0.5 line-clamp-2">{r.description}</p>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-d8x-text-secondary max-w-[150px] truncate">{r.source ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-xs text-ink-300 max-w-[150px] truncate">{r.source ?? "—"}</td>
                     <td className="px-4 py-2.5 text-center">
                       <span className={`text-xs px-2 py-0.5 rounded ${CONF_BADGE[r.confidence] ?? CONF_BADGE.medium}`}>{r.confidence ?? "medium"}</span>
                     </td>
@@ -232,11 +248,11 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 6: Domain entities ── */}
       {entities.length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-4">Domain model ({entities.length} entities)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {entities.map((e: any, i: number) => (
-              <div key={i} className="bg-d8x-background border border-d8x-border rounded-lg p-4">
+              <div key={i} className="bg-ink-950 border border-ink-700 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="font-semibold text-sm">{e.name}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${ENTITY_TYPE_BADGE[e.type] ?? ENTITY_TYPE_BADGE.data_object}`}>{e.type}</span>
@@ -244,14 +260,14 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
                 {e.attributes && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {(e.attributes as string[]).slice(0, 8).map((a: any, j: number) => (
-                      <span key={j} className="text-[10px] px-1.5 py-0.5 rounded bg-d8x-border text-d8x-text-secondary">{typeof a === "string" ? a : a.name ?? a}</span>
+                      <span key={j} className="text-[10px] px-1.5 py-0.5 rounded bg-ink-700 text-ink-300">{typeof a === "string" ? a : a.name ?? a}</span>
                     ))}
-                    {(e.attributes as any[]).length > 8 && <span className="text-[10px] text-d8x-text-tertiary">+{(e.attributes as any[]).length - 8} more</span>}
+                    {(e.attributes as any[]).length > 8 && <span className="text-[10px] text-ink-400">+{(e.attributes as any[]).length - 8} more</span>}
                   </div>
                 )}
                 {e.relationships && (e.relationships as string[]).slice(0, 3).map((r: any, j: number) => (
-                  <p key={j} className="text-[11px] text-d8x-text-secondary flex items-center gap-1">
-                    <ArrowRight className="w-3 h-3 text-d8x-text-tertiary" /> {typeof r === "string" ? r : `${r.relationship_type ?? ""} ${r.related_entity ?? r}`}
+                  <p key={j} className="text-[11px] text-ink-300 flex items-center gap-1">
+                    <ArrowRight className="w-3 h-3 text-ink-400" /> {typeof r === "string" ? r : `${r.relationship_type ?? ""} ${r.related_entity ?? r}`}
                   </p>
                 ))}
               </div>
@@ -262,15 +278,15 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 7: Questions for review ── */}
       {questions.length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <MessageCircleQuestion className="w-4 h-4 text-d8x-blue" /> Questions for review ({questions.length})
+            <MessageCircleQuestion className="w-4 h-4 text-sky-500" /> Questions for review ({questions.length})
           </h3>
           <div className="space-y-2">
             {questions.map((q: any, i: number) => (
-              <div key={i} className="bg-d8x-background border border-d8x-border rounded-lg p-3">
+              <div key={i} className="bg-ink-950 border border-ink-700 rounded-lg p-3">
                 <p className="text-sm font-medium">{q.question}</p>
-                {q.impact && <p className="text-xs text-d8x-text-secondary mt-1">Impact: {q.impact}</p>}
+                {q.impact && <p className="text-xs text-ink-300 mt-1">Impact: {q.impact}</p>}
                 <span className={`inline-block mt-1.5 text-[10px] px-1.5 py-0.5 rounded ${q.priority === "blocking" ? "bg-red-600/20 text-red-400" : q.priority === "high" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"}`}>
                   {q.priority ?? "medium"} priority
                 </span>
@@ -282,20 +298,20 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 8: System understanding ── */}
       {understanding.purpose && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><BookOpen className="w-4 h-4 text-d8x-blue" /> System understanding</h3>
-          <p className="text-sm text-d8x-text-secondary mb-3">{understanding.purpose}</p>
-          {understanding.domain && <span className="text-[10px] px-2 py-0.5 rounded bg-d8x-blue/15 text-d8x-blue">{understanding.domain}</span>}
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><BookOpen className="w-4 h-4 text-sky-500" /> System understanding</h3>
+          <p className="text-sm text-ink-300 mb-3">{understanding.purpose}</p>
+          {understanding.domain && <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/15 text-sky-500">{understanding.domain}</span>}
           {understanding.key_workflows && (
             <ol className="mt-3 space-y-1.5 list-decimal list-inside">
               {(understanding.key_workflows as string[]).map((w: string, i: number) => (
-                <li key={i} className="text-xs text-d8x-text-secondary">{w}</li>
+                <li key={i} className="text-xs text-ink-300">{w}</li>
               ))}
             </ol>
           )}
           {understanding.critical_risks && (
             <div className="mt-3">
-              <p className="text-xs font-medium text-d8x-text-secondary mb-1">Critical risks:</p>
+              <p className="text-xs font-medium text-ink-300 mb-1">Critical risks:</p>
               {(understanding.critical_risks as string[]).map((r: string, i: number) => (
                 <p key={i} className="text-xs text-red-400/80 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> {r}
@@ -308,7 +324,7 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
 
       {/* ── Section 9: Quality assessment ── */}
       {Object.keys(qa).length > 0 && (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-5">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-5">
           <h3 className="text-sm font-semibold mb-4">Quality assessment</h3>
           <div className="space-y-3">
             {(["completeness", "depth", "consistency", "traceability", "actionability", "security"] as const).map((dim) => {
@@ -316,11 +332,11 @@ export function DiscoverReport({ output }: { output: Record<string, any> }) {
               if (val === 0 && dim === "security") return null;
               return (
                 <div key={dim} className="flex items-center gap-3">
-                  <span className="text-xs text-d8x-text-secondary w-28 capitalize">{dim}</span>
-                  <div className="flex-1 h-2 bg-d8x-border rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${val >= 80 ? "bg-d8x-success" : val >= 60 ? "bg-d8x-warning" : "bg-d8x-danger"}`} style={{ width: `${Math.min(val, 100)}%` }} />
+                  <span className="text-xs text-ink-300 w-28 capitalize">{dim}</span>
+                  <div className="flex-1 h-2 bg-ink-700 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${val >= 80 ? "bg-emerald-500" : val >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${Math.min(val, 100)}%` }} />
                   </div>
-                  <span className="text-xs text-d8x-text-secondary w-12 text-right">{val}/100</span>
+                  <span className="text-xs text-ink-300 w-12 text-right">{val}/100</span>
                 </div>
               );
             })}

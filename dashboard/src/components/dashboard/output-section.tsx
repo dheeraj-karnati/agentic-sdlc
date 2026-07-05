@@ -15,20 +15,20 @@ export function OutputSection({ title, children, defaultExpanded = false, count 
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
-    <div className="border border-d8x-border rounded-lg overflow-hidden">
+    <div className="border border-ink-700 rounded-lg overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-d8x-surface hover:bg-d8x-surface-hover transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-3 bg-ink-900 hover:bg-ink-850 transition-colors text-left"
       >
         <div className="flex items-center gap-2">
-          {expanded ? <ChevronDown className="w-4 h-4 text-d8x-text-tertiary" /> : <ChevronRight className="w-4 h-4 text-d8x-text-tertiary" />}
+          {expanded ? <ChevronDown className="w-4 h-4 text-ink-400" /> : <ChevronRight className="w-4 h-4 text-ink-400" />}
           <span className="text-sm font-medium">{title}</span>
           {count !== undefined && (
-            <span className="text-xs bg-d8x-border px-1.5 py-0.5 rounded text-d8x-text-secondary">{count}</span>
+            <span className="text-xs bg-ink-700 px-1.5 py-0.5 rounded text-ink-300">{count}</span>
           )}
         </div>
       </button>
-      {expanded && <div className="px-4 py-3 border-t border-d8x-border text-sm">{children}</div>}
+      {expanded && <div className="px-4 py-3 border-t border-ink-700 text-sm">{children}</div>}
     </div>
   );
 }

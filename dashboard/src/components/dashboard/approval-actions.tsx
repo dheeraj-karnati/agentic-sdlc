@@ -107,9 +107,9 @@ export function ApprovalActions({ projectId, gateId, agentType }: ApprovalAction
   // Decision made — show confirmation
   if (decision) {
     const msgs: Record<string, { cls: string; text: string }> = {
-      approved: { cls: "bg-d8x-success/10 border-d8x-success/30 text-d8x-success", text: `Approved — starting ${nextLabel} agent...` },
-      revision_requested: { cls: "bg-d8x-warning/10 border-d8x-warning/30 text-d8x-warning", text: "Reprocessing with your feedback..." },
-      rejected: { cls: "bg-d8x-danger/10 border-d8x-danger/30 text-d8x-danger", text: "Rejected — returning to upload" },
+      approved: { cls: "bg-emerald-500/10 border-emerald-500/30 text-emerald-500", text: `Approved — starting ${nextLabel} agent...` },
+      revision_requested: { cls: "bg-amber-500/10 border-amber-500/30 text-amber-500", text: "Reprocessing with your feedback..." },
+      rejected: { cls: "bg-red-500/10 border-red-500/30 text-red-500", text: "Rejected — returning to upload" },
     };
     const m = msgs[decision] ?? msgs.approved;
     return (
@@ -121,8 +121,8 @@ export function ApprovalActions({ projectId, gateId, agentType }: ApprovalAction
   }
 
   return (
-    <div className="mt-6 pt-6 border-t border-d8x-border">
-      <p className="text-sm text-d8x-text-secondary italic mb-5">
+    <div className="mt-6 pt-6 border-t border-ink-700">
+      <p className="text-sm text-ink-300 italic mb-5">
         The next step is the {nextLabel} agent
         {agentType === "ingest" && ", which will analyze these sources for business rules, requirements, domain entities, and potential conflicts between different sources."}
         {agentType === "discover" && ", which will generate architecture decisions, database schema, API contracts, and frontend component design."}
@@ -134,7 +134,7 @@ export function ApprovalActions({ projectId, gateId, agentType }: ApprovalAction
           <button
             onClick={handleApprove}
             disabled={submitting}
-            className="flex-[2] flex items-center justify-center gap-2 py-3 rounded-lg bg-d8x-success hover:bg-d8x-success/90 text-white font-medium text-sm transition-colors disabled:opacity-50"
+            className="flex-[2] flex items-center justify-center gap-2 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-500/90 text-white font-medium text-sm transition-colors disabled:opacity-50"
           >
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             Approve & start {nextLabel}
@@ -142,7 +142,7 @@ export function ApprovalActions({ projectId, gateId, agentType }: ApprovalAction
           <button
             onClick={() => setShowRevision(true)}
             disabled={submitting}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border border-d8x-warning/50 text-d8x-warning hover:bg-d8x-warning/10 text-sm transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 text-sm transition-colors disabled:opacity-50"
           >
             <RotateCcw className="w-4 h-4" />
             Request changes
@@ -150,26 +150,26 @@ export function ApprovalActions({ projectId, gateId, agentType }: ApprovalAction
           <button
             onClick={handleReject}
             disabled={submitting}
-            className="px-4 py-3 rounded-lg border border-d8x-danger/30 text-d8x-danger hover:bg-d8x-danger/10 text-sm transition-colors disabled:opacity-50"
+            className="px-4 py-3 rounded-lg border border-red-500/30 text-red-500 hover:bg-red-500/10 text-sm transition-colors disabled:opacity-50"
           >
             <XCircle className="w-4 h-4" />
           </button>
         </div>
       ) : (
-        <div className="bg-d8x-surface border border-d8x-border rounded-lg p-4 space-y-3">
+        <div className="bg-ink-900 border border-ink-700 rounded-lg p-4 space-y-3">
           <h4 className="text-sm font-medium">What should change?</h4>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Describe what needs to be different. For example: 'The PDF wasn't parsed correctly' or 'Please also process the ZIP file contents'"
-            className="bg-d8x-background border-d8x-border min-h-[80px] text-sm"
+            className="bg-ink-950 border-ink-700 min-h-[80px] text-sm"
           />
           <div className="flex gap-2">
-            <button onClick={handleRevise} disabled={!notes.trim() || submitting} className="px-4 py-2 rounded-lg bg-d8x-warning text-d8x-background text-sm font-medium disabled:opacity-50">
+            <button onClick={handleRevise} disabled={!notes.trim() || submitting} className="px-4 py-2 rounded-lg bg-amber-500 text-ink-950 text-sm font-medium disabled:opacity-50">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin inline mr-1" /> : null}
               Reprocess with feedback
             </button>
-            <button onClick={() => setShowRevision(false)} className="px-4 py-2 rounded-lg bg-d8x-surface border border-d8x-border text-d8x-text-secondary text-sm">Cancel</button>
+            <button onClick={() => setShowRevision(false)} className="px-4 py-2 rounded-lg bg-ink-900 border border-ink-700 text-ink-300 text-sm">Cancel</button>
           </div>
         </div>
       )}

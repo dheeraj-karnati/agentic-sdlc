@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>D8X — Agentic SDLC, conflict-aware</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+          sans: ['Geist', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          ink: {
+            950: '#08080a',
+            900: '#0c0c0e',
+            850: '#111114',
+            800: '#16161a',
+            750: '#1c1c21',
+            700: '#23232a',
+            600: '#2d2d35',
+            500: '#3a3a44',
+            400: '#5a5a66',
+            300: '#8a8a96',
+            200: '#bdbdc6',
+            100: '#e7e7ea',
+            50:  '#f5f5f7',
+          },
+          flame: {
+            DEFAULT: '#ff7a3a',
+            soft: '#ff9560',
+            deep: '#e85d1c',
+            glow: 'rgba(255,122,58,0.18)',
+          },
+          moss: '#7aaa7a', // sparingly for "approved" ticks
+        },
+        boxShadow: {
+          'flame': '0 0 0 1px rgba(255,122,58,.35), 0 8px 30px -8px rgba(255,122,58,.35)',
+          'card': '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 0 0 1px rgba(255,255,255,0.04)',
+        },
+        keyframes: {
+          flow: { '0%': { transform: 'translateX(-10%)', opacity: '0' }, '15%':{opacity:'1'}, '85%':{opacity:'1'}, '100%': { transform: 'translateX(110%)', opacity: '0' } },
+          pulseRing: { '0%':{ boxShadow:'0 0 0 0 rgba(255,122,58,.45)' }, '70%':{ boxShadow:'0 0 0 14px rgba(255,122,58,0)' }, '100%':{ boxShadow:'0 0 0 0 rgba(255,122,58,0)' } },
+          marquee: { '0%':{transform:'translateX(0)'}, '100%':{transform:'translateX(-50%)'} },
+          blink: { '0%,49%':{opacity:'1'},'50%,100%':{opacity:'0'}},
+        },
+        animation: {
+          flow: 'flow 3.2s linear infinite',
+          pulseRing: 'pulseRing 2.4s ease-out infinite',
+          marquee: 'marquee 40s linear infinite',
+          blink: 'blink 1s steps(1) infinite',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background: #08080a;
+    color: #e7e7ea;
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01","cv11";
+  }
+  .display { font-family: 'Space Grotesk', system-ui, sans-serif; letter-spacing: -0.02em; }
+  .num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  ::selection { background: #ff7a3a; color: #08080a; }
+  /* Subtle grid background */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .bg-noise::before {
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+    background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+  }
+  .hairline { border-color: rgba(255,255,255,0.07); }
+  .hairline-strong { border-color: rgba(255,255,255,0.12); }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  /* hide scrollbars on horizontal pipeline */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+</head>
+<body class="bg-ink-950 text-ink-100">
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="sections.jsx"></script>
+  <script type="text/babel" src="sections2.jsx"></script>
+  <script type="text/babel">
+    const { Nav, Hero, Pipeline, ConflictDemo, HowItWorks, Consulting, Trust, Pricing, FAQ, FinalCTA, Footer } = window;
+    function App() {
+      return (
+        <div className="relative">
+          <Nav />
+          <main>
+            <Hero />
+            <Pipeline />
+            <ConflictDemo />
+            <HowItWorks />
+            <Consulting />
+            <Trust />
+            <Pricing />
+            <FAQ />
+            <FinalCTA />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

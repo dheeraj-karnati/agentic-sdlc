@@ -44,39 +44,39 @@ export default function NewProjectPage() {
   return (
     <div className="max-w-xl mx-auto px-6 py-12">
       <h1 className="text-2xl font-bold mb-2">New analysis</h1>
-      <p className="text-sm text-d8x-text-secondary mb-8">Upload your project artifacts and let D8X analyze them.</p>
+      <p className="text-sm text-ink-300 mb-8">Upload your project artifacts and let D8X analyze them.</p>
 
       {/* Project info */}
       <div className="space-y-4 mb-8">
         <div>
-          <label className="text-sm font-medium text-d8x-text-secondary mb-1.5 block">Project name *</label>
+          <label className="text-sm font-medium text-ink-300 mb-1.5 block">Project name *</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Inventory system modernization"
-            className="bg-d8x-background border-d8x-border"
+            className="bg-ink-950 border-ink-700"
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-d8x-text-secondary mb-1.5 block">Description</label>
+          <label className="text-sm font-medium text-ink-300 mb-1.5 block">Description</label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Brief description of what you're analyzing..."
-            className="bg-d8x-background border-d8x-border min-h-[80px]"
+            className="bg-ink-950 border-ink-700 min-h-[80px]"
           />
         </div>
       </div>
 
       {/* File upload */}
       <div className="mb-8">
-        <label className="text-sm font-medium text-d8x-text-secondary mb-3 block">Upload artifacts *</label>
+        <label className="text-sm font-medium text-ink-300 mb-3 block">Upload artifacts *</label>
         <FileUploader files={files} onFilesChange={setFiles} />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-4 px-4 py-3 bg-d8x-danger/10 border border-d8x-danger/20 rounded-lg text-sm text-d8x-danger">
+        <div className="mb-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500">
           {error}
         </div>
       )}
@@ -85,7 +85,7 @@ export default function NewProjectPage() {
       <button
         onClick={handleSubmit}
         disabled={!canSubmit}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-d8x-navy hover:bg-d8x-blue text-white font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-ink-900 hover:bg-sky-500 text-white font-medium rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>

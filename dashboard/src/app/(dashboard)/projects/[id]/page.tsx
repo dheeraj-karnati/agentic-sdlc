@@ -127,7 +127,7 @@ function ProjectContent() {
   };
 
   if (isLoading || !project) {
-    return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-d8x-text-tertiary" /></div>;
+    return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-ink-400" /></div>;
   }
 
   // Show "viewing history" banner if looking at a completed agent while another is active
@@ -141,11 +141,11 @@ function ProjectContent() {
         <div className="flex-[65] overflow-y-auto p-6">
           {/* Banner: viewing historical agent while another is running */}
           {isViewingHistory && (
-            <div className="mb-4 flex items-center justify-between px-4 py-2.5 bg-d8x-blue/10 border border-d8x-blue/20 rounded-lg">
-              <span className="text-xs text-d8x-blue">
+            <div className="mb-4 flex items-center justify-between px-4 py-2.5 bg-sky-500/10 border border-sky-500/20 rounded-lg">
+              <span className="text-xs text-sky-500">
                 Viewing completed {agentMeta?.label} report. {AGENTS.find(a => a.id === agentStatusFromActive?.agent_type)?.label} is still running in the background.
               </span>
-              <button onClick={handleBackToCurrent} className="text-xs text-d8x-blue font-medium hover:underline">
+              <button onClick={handleBackToCurrent} className="text-xs text-sky-500 font-medium hover:underline">
                 Back to {AGENTS.find(a => a.id === agentStatusFromActive?.agent_type)?.label} →
               </button>
             </div>
@@ -153,10 +153,10 @@ function ProjectContent() {
 
           {/* Start agent prompt */}
           {canStart && agentMeta?.available && (
-            <div className="mb-6 bg-d8x-surface border border-d8x-gold/20 rounded-lg p-6 text-center">
+            <div className="mb-6 bg-ink-900 border border-flame/20 rounded-lg p-6 text-center">
               <h3 className="text-lg font-semibold mb-2">{agentMeta.num}: {agentMeta.label} is ready</h3>
-              <p className="text-sm text-d8x-text-secondary mb-4">Click below to start the {agentMeta.label} agent.</p>
-              <Button onClick={handleStart} disabled={startAgentMut.isPending} className="bg-d8x-gold text-d8x-background hover:bg-d8x-gold-light">
+              <p className="text-sm text-ink-300 mb-4">Click below to start the {agentMeta.label} agent.</p>
+              <Button onClick={handleStart} disabled={startAgentMut.isPending} className="bg-flame text-ink-950 hover:bg-flame-soft">
                 {startAgentMut.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
                 Start {agentMeta.label}
               </Button>
@@ -164,7 +164,7 @@ function ProjectContent() {
           )}
 
           {selectedAgent && !agentMeta?.available && (
-            <div className="flex items-center justify-center h-40 text-d8x-text-secondary text-sm">{agentMeta?.num}: {agentMeta?.label} — coming soon</div>
+            <div className="flex items-center justify-center h-40 text-ink-300 text-sm">{agentMeta?.num}: {agentMeta?.label} — coming soon</div>
           )}
 
           {/* Show the displayed agent's report (either active or historical) */}
@@ -177,11 +177,11 @@ function ProjectContent() {
           )}
 
           {!displayedStatus && activeRunId && isViewingActive && (
-            <div className="flex items-center justify-center h-40 gap-2 text-d8x-text-secondary text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading agent status...</div>
+            <div className="flex items-center justify-center h-40 gap-2 text-ink-300 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading agent status...</div>
           )}
 
           {!displayedStatus && !activeRunId && !canStart && selectedAgent && agentMeta?.available && (
-            <div className="flex items-center justify-center h-40 text-d8x-text-secondary text-sm">Complete previous stages first to reach {agentMeta.label}.</div>
+            <div className="flex items-center justify-center h-40 text-ink-300 text-sm">Complete previous stages first to reach {agentMeta.label}.</div>
           )}
         </div>
 
@@ -195,7 +195,7 @@ function ProjectContent() {
 
 export default function ProjectDetailPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-d8x-text-tertiary" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-ink-400" /></div>}>
       <ProjectContent />
     </Suspense>
   );
